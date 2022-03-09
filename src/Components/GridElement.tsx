@@ -8,11 +8,7 @@ export interface GridElementState {
     type: GridElementType;
 }
 
-export enum GridElementType {
-    Default,
-    Start,
-    Target,
-}
+export type GridElementType = "default" | "start" | "target";
 
 export interface GridElementProps {
     state: GridElementState;
@@ -31,10 +27,8 @@ const GridElement = ({
     if (state.marked) {
         classNames.push("marked");
     }
-    if (state.type == GridElementType.Start) {
-        classNames.push("start");
-    } else if (state.type == GridElementType.Target) {
-        classNames.push("target");
+    if (state.type !== "default") {
+        classNames.push(state.type);
     }
 
     return (

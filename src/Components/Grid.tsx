@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Dijkstras from "../Pathfinding/dijkstras";
+import Graph, { Edge, Vertex } from "../Pathfinding/graph";
 import "./../App.css";
 import GridElement, { GridElementState, GridElementType } from "./GridElement";
 
@@ -7,31 +9,84 @@ export interface GridPosition {
     y: number;
 }
 
-interface GridProps {
+interface GridSize {
     rows: number;
     columns: number;
+}
+
+interface GridProps {
+    size: GridSize;
     start: GridPosition;
     target: GridPosition;
 }
 
+const inBounds = (pos: GridPosition, gridSize: GridSize) => {
+    const xInBounds = pos.x >= 0 && pos.x < gridSize.columns;
+    const yInBounds = pos.y >= 0 && pos.y < gridSize.rows;
+    return xInBounds && yInBounds;
+};
+
+const adjacentNodePositions = (pos: GridPosition): GridPosition[] => {
+    const left: GridPosition = { x: pos.x - 1, y: pos.y };
+    const right: GridPosition = { x: pos.x + 1, y: pos.y };
+    const up: GridPosition = { x: pos.x, y: pos.y - 1 };
+    const down: GridPosition = { x: pos.x, y: pos.y + 1 };
+    return [right, down, up, left];
+};
+
+const posToString = (pos: GridPosition) => {
+    return `${pos.x},${pos.y}`;
+};
+
+const generateGridVertices = (gridSize: GridSize): Graph => {
+    const graph = new Graph();
+
+    const vertices: Vertex[][] = Array(gridSize.rows)
+        .fill(0)
+        .map((row) => Array(gridSize.columns));
+    for (let i = 0; i < gridSize.rows; i++) {
+        for (let j = 0; j < gridSize.columns; j++) {
+            const pos = { x: j, y: i };
+            const vertex = new Vertex(posToString(pos));
+            vertices[i][j] = vertex;
+            graph.addVertex(vertex.getName());
+        }
+    }
+
+    for (let i = 0; i < gridSize.rows; i++) {
+        for (let j = 0; j < gridSize.columns; j++) {
+            const pos = { x: j, y: i };
+            const vertex = vertices[i][j];
+            const adjacentVertices = adjacentNodePositions(pos)
+                .filter((p) => inBounds(p, gridSize))
+                .map((p) => ({ toVertex: posToString(p), weight: 1 }));
+
+            adjacentVertices.forEach((e) => {
+                const edge = new Edge(vertex.getName(), e.toVertex, 1);
+                graph.addEdge(vertex.getName(), edge);
+            });
+        }
+    }
+    return graph;
+};
+
 const initGridStates = (
-    rows: number,
-    columns: number,
+    size: GridSize,
     start: GridPosition,
     target: GridPosition
 ): GridElementState[][] => {
-    const gridStates = [];
-    for (let i = 0; i < rows; i++) {
-        const row = [];
-        for (let j = 0; j < columns; j++) {
+    const gridStates: GridElementState[][] = [];
+    for (let i = 0; i < size.rows; i++) {
+        const row: GridElementState[] = [];
+        for (let j = 0; j < size.columns; j++) {
             const position = { x: j, y: i };
-            let type = GridElementType.Default;
+            let type: GridElementType = "default";
             const isStart = position.x === start.x && position.y === start.y;
             const isTarget = position.x === target.x && position.y === target.y;
             if (isStart) {
-                type = GridElementType.Start;
+                type = "start";
             } else if (isTarget) {
-                type = GridElementType.Target;
+                type = "target";
             }
             row.push({
                 marked: false,
@@ -44,11 +99,16 @@ const initGridStates = (
     return gridStates;
 };
 
-const Grid = ({ rows, columns, start, target }: GridProps) => {
+const Grid = ({ size, start, target }: GridProps) => {
     const [isMouseDown, setMouseDown] = useState(false);
     const [gridStates, setGridStates] = useState(
-        initGridStates(rows, columns, start, target)
+        initGridStates(size, start, target)
     );
+
+    const graph = generateGridVertices(size);
+    const dijkstras = new Dijkstras(graph);
+    const path = dijkstras.calculateShortestPath("0,0", "2,2");
+    console.log("Found path: ", path);
 
     const updateGridState = (
         oldState: GridElementState,
