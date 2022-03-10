@@ -39,6 +39,10 @@
     border: 1px solid red;
 }
 
+.grid-element.path {
+    background-color: cyan;
+}
+
 .control-panel {
     margin: 10px;
 }

@@ -1,3 +1,5 @@
+import { GridPosition } from "../Components/Grid";
+
 export class Edge {
     private from: string;
     private to: string;
@@ -24,25 +26,34 @@ export class Edge {
 
 export class Vertex {
     private name: string;
+    private position: GridPosition;
 
-    constructor(name: string) {
+    constructor(name: string, position: GridPosition) {
         this.name = name;
+        this.position = position;
     }
 
     getName() {
         return this.name;
     }
+
+    getPosition() {
+        return this.position;
+    }
 }
 
 class Graph {
     private adjacencyList: Map<string, Edge[]>;
+    private vertices: Map<string, Vertex>;
 
     constructor() {
         this.adjacencyList = new Map();
+        this.vertices = new Map();
     }
 
-    addVertex(vertex: string) {
-        this.adjacencyList.set(vertex, []);
+    addVertex(vertex: Vertex) {
+        this.adjacencyList.set(vertex.getName(), []);
+        this.vertices.set(vertex.getName(), vertex);
     }
 
     addEdge(vertex: string, edge: Edge) {
@@ -59,6 +70,10 @@ class Graph {
 
     getVertices(): string[] {
         return Array.from(this.adjacencyList.keys());
+    }
+
+    getVertex(vertexName: string): Vertex | undefined {
+        return this.vertices.get(vertexName);
     }
 }
 

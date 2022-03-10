@@ -8,7 +8,7 @@ export interface GridElementState {
     type: GridElementType;
 }
 
-export type GridElementType = "default" | "start" | "target";
+export type GridElementType = "default" | "start" | "target" | "path";
 
 export interface GridElementProps {
     state: GridElementState;

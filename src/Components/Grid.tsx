@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Dijkstras from "../Pathfinding/dijkstras";
 import Graph, { Edge, Vertex } from "../Pathfinding/graph";
 import "./../App.css";
@@ -46,10 +46,10 @@ const generateGridVertices = (gridSize: GridSize): Graph => {
         .map((row) => Array(gridSize.columns));
     for (let i = 0; i < gridSize.rows; i++) {
         for (let j = 0; j < gridSize.columns; j++) {
-            const pos = { x: j, y: i };
-            const vertex = new Vertex(posToString(pos));
+            const pos: GridPosition = { x: j, y: i };
+            const vertex = new Vertex(posToString(pos), pos);
             vertices[i][j] = vertex;
-            graph.addVertex(vertex.getName());
+            graph.addVertex(vertex);
         }
     }
 
@@ -105,22 +105,22 @@ const Grid = ({ size, start, target }: GridProps) => {
         initGridStates(size, start, target)
     );
 
-    const graph = generateGridVertices(size);
-    const dijkstras = new Dijkstras(graph);
-    const path = dijkstras.calculateShortestPath("0,0", "2,2");
-    console.log("Found path: ", path);
-
-    const updateGridState = (
-        oldState: GridElementState,
-        newState: GridElementState
-    ) => {
+    const updateGridState = (newState: GridElementState) => {
         const gridStatesCopy = [...gridStates];
-        gridStatesCopy[oldState.position.y][oldState.position.x] = newState;
+        gridStatesCopy[newState.position.y][newState.position.x] = newState;
+        setGridStates(gridStatesCopy);
+    };
+
+    const updateGridStates = (newStates: GridElementState[]) => {
+        const gridStatesCopy = [...gridStates];
+        newStates.forEach((state) => {
+            gridStatesCopy[state.position.y][state.position.x] = state;
+        });
         setGridStates(gridStatesCopy);
     };
 
     const setMarked = (state: GridElementState) => {
-        updateGridState(state, { ...state, marked: true });
+        updateGridState({ ...state, marked: true });
     };
 
     const onMouseDownHandler = (state: GridElementState) => {
@@ -151,6 +151,19 @@ const Grid = ({ size, start, target }: GridProps) => {
             />
         ))
     );
+
+    useEffect(() => {
+        const dijkstras = new Dijkstras(generateGridVertices(size));
+        const path = dijkstras.calculateShortestPath("0,0", "3,3");
+        console.log("Found path: ", path);
+
+        const newStates: GridElementState[] = [];
+        path.forEach((vertex) => {
+            const { x, y } = vertex.position;
+            newStates.push({ ...gridStates[y][x], type: "path" });
+        });
+        updateGridStates(newStates);
+    }, []);
 
     return (
         <div className="grid">

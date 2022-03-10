@@ -1,8 +1,9 @@
-import { createNoSubstitutionTemplateLiteral } from "typescript";
-import Graph, { Vertex } from "./graph";
+import { GridPosition } from "../Components/Grid";
+import Graph from "./graph";
 import PriorityQueue from "./priority-queue/priority-queue";
 
 interface DistanceVertex {
+    position: GridPosition;
     weight: number;
     previous?: string;
 }
@@ -18,8 +19,11 @@ class Dijkstras {
         this.visited = new Set();
         this.graph = graph;
         this.distance = new Map();
-        this.graph.getVertices().forEach((vertex) => {
-            this.distance.set(vertex, { weight: Infinity });
+        this.graph.getVertices().forEach((vertexName) => {
+            this.distance.set(vertexName, {
+                position: this.graph.getVertex(vertexName)!.getPosition(),
+                weight: Infinity,
+            });
         });
     }
 
@@ -40,7 +44,8 @@ class Dijkstras {
         if (!distVertex) {
             throw new Error("Start vertex not found");
         }
-        this.distance.set(start, { weight: 0 });
+        const pos = this.graph.getVertex(start)!.getPosition();
+        this.distance.set(start, { position: pos, weight: 0 });
         this.unvisited.push({ name: start, cost: 0 });
 
         while (!this.unvisited.isEmpty()) {
@@ -65,6 +70,9 @@ class Dijkstras {
 
                 if (newWeight < oldWeight) {
                     this.distance.set(edge.getTo(), {
+                        position: this.graph
+                            .getVertex(edge.getTo())!
+                            .getPosition(),
                         weight: newWeight,
                         previous: vertex.name,
                     });
