@@ -1,8 +1,8 @@
-import { GridPosition } from "../Components/Grid";
 import Graph from "./graph";
+import { GridPosition } from "./grid";
 import PriorityQueue from "./priority-queue/priority-queue";
 
-interface DistanceVertex {
+export interface DistanceVertex {
     position: GridPosition;
     weight: number;
     previous?: string;

@@ -2,13 +2,15 @@ import React from "react";
 import "./../App.css";
 
 interface ControlPanelProps {
-    onClickHandler: () => void;
+    calculatePath: () => void;
+    reset: () => void;
 }
 
-const ControlPanel = ({ onClickHandler }: ControlPanelProps) => {
+const ControlPanel = ({ calculatePath, reset }: ControlPanelProps) => {
     return (
         <div className="control-panel">
-            <button onClick={onClickHandler}>Calculate Path</button>
+            <button onClick={calculatePath}>Calculate Path</button>
+            <button onClick={reset}>Reset</button>
         </div>
     );
 };

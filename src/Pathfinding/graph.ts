@@ -1,4 +1,4 @@
-import { GridPosition } from "../Components/Grid";
+import { GridPosition } from "./grid";
 
 export class Edge {
     private from: string;

@@ -1,6 +1,6 @@
 import React from "react";
+import { GridPosition } from "../Pathfinding/grid";
 import "./../App.css";
-import { GridPosition } from "./Grid";
 
 export interface GridElementState {
     position: GridPosition;
