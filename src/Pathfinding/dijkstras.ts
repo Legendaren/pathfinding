@@ -35,7 +35,7 @@ class Dijkstras {
             path.push(vertexIterator);
             vertexIterator = this.distance.get(vertexIterator.previous || "");
         }
-        console.log("distance:", this.distance);
+        // console.log("distance:", this.distance);
         return path;
     }
 
@@ -50,7 +50,7 @@ class Dijkstras {
 
         while (!this.unvisited.isEmpty()) {
             const vertex = this.unvisited.pop();
-            console.log("pop: ", vertex);
+            // console.log("pop: ", vertex);
             if (this.visited.has(vertex.name)) {
                 continue;
             }
@@ -61,12 +61,10 @@ class Dijkstras {
             }
 
             for (const edge of this.graph.getEdges(vertex.name)) {
+                // console.log("edge to: ", edge.getTo());
                 const newWeight =
                     this.distance.get(vertex.name)!.weight + edge.getWeight();
                 const oldWeight = this.distance.get(edge.getTo())!.weight;
-                console.log(
-                    `old weight: ${oldWeight}, new weight: ${newWeight}`
-                );
 
                 if (newWeight < oldWeight) {
                     this.distance.set(edge.getTo(), {
@@ -84,6 +82,7 @@ class Dijkstras {
                 });
             }
         }
+        console.log("No path found");
         return [];
     }
 }

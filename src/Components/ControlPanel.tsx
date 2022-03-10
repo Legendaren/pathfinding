@@ -1,10 +1,14 @@
 import React from "react";
 import "./../App.css";
 
-const ControlPanel = () => {
+interface ControlPanelProps {
+    onClickHandler: () => void;
+}
+
+const ControlPanel = ({ onClickHandler }: ControlPanelProps) => {
     return (
         <div className="control-panel">
-            <button>Calculate Path</button>
+            <button onClick={onClickHandler}>Calculate Path</button>
         </div>
     );
 };

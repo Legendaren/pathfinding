@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Dijkstras from "../Pathfinding/dijkstras";
 import Graph, { Edge, Vertex } from "../Pathfinding/graph";
 import "./../App.css";
+import ControlPanel from "./ControlPanel";
 import GridElement, { GridElementState, GridElementType } from "./GridElement";
 
 export interface GridPosition {
@@ -38,33 +39,32 @@ const posToString = (pos: GridPosition) => {
     return `${pos.x},${pos.y}`;
 };
 
-const generateGridVertices = (gridSize: GridSize): Graph => {
+const generateGridVertices = (
+    states: GridElementState[][],
+    gridSize: GridSize
+): Graph => {
     const graph = new Graph();
 
-    const vertices: Vertex[][] = Array(gridSize.rows)
-        .fill(0)
-        .map((row) => Array(gridSize.columns));
     for (let i = 0; i < gridSize.rows; i++) {
         for (let j = 0; j < gridSize.columns; j++) {
+            if (states[i][j].marked) continue;
+
             const pos: GridPosition = { x: j, y: i };
+
             const vertex = new Vertex(posToString(pos), pos);
-            vertices[i][j] = vertex;
             graph.addVertex(vertex);
-        }
-    }
 
-    for (let i = 0; i < gridSize.rows; i++) {
-        for (let j = 0; j < gridSize.columns; j++) {
-            const pos = { x: j, y: i };
-            const vertex = vertices[i][j];
-            const adjacentVertices = adjacentNodePositions(pos)
-                .filter((p) => inBounds(p, gridSize))
-                .map((p) => ({ toVertex: posToString(p), weight: 1 }));
-
-            adjacentVertices.forEach((e) => {
-                const edge = new Edge(vertex.getName(), e.toVertex, 1);
-                graph.addEdge(vertex.getName(), edge);
-            });
+            // Add edges to adjacent vertices that are not marked
+            adjacentNodePositions(pos)
+                .filter(
+                    (p) => inBounds(p, gridSize) && !states[p.y][p.x].marked
+                )
+                .forEach((p) => {
+                    graph.addEdge(
+                        vertex.getName(),
+                        new Edge(vertex.getName(), posToString(p), 1)
+                    );
+                });
         }
     }
     return graph;
@@ -126,19 +126,19 @@ const Grid = ({ size, start, target }: GridProps) => {
     const onMouseDownHandler = (state: GridElementState) => {
         setMarked(state);
         setMouseDown(true);
-        console.log("onMouseDown");
+        // console.log("onMouseDown");
     };
 
     const onMouseUpHandler = (state: GridElementState) => {
         setMouseDown(false);
-        console.log("onMouseUp");
+        // console.log("onMouseUp");
     };
 
     const onMouseEnterHandler = (state: GridElementState) => {
         if (isMouseDown && !state.marked) {
             setMarked(state);
         }
-        console.log("onMouseEnter");
+        // console.log("onMouseEnter");
     };
 
     const gridElements = gridStates.map((row) =>
@@ -152,9 +152,10 @@ const Grid = ({ size, start, target }: GridProps) => {
         ))
     );
 
-    useEffect(() => {
-        const dijkstras = new Dijkstras(generateGridVertices(size));
-        const path = dijkstras.calculateShortestPath("0,0", "3,3");
+    const calculatePath = () => {
+        const graph = generateGridVertices(gridStates, size);
+        const dijkstras = new Dijkstras(graph);
+        const path = dijkstras.calculateShortestPath("0,0", "15,15");
         console.log("Found path: ", path);
 
         const newStates: GridElementState[] = [];
@@ -163,7 +164,7 @@ const Grid = ({ size, start, target }: GridProps) => {
             newStates.push({ ...gridStates[y][x], type: "path" });
         });
         updateGridStates(newStates);
-    }, []);
+    };
 
     return (
         <div className="grid">
@@ -174,6 +175,7 @@ const Grid = ({ size, start, target }: GridProps) => {
                     ))}
                 </div>
             ))}
+            <ControlPanel onClickHandler={calculatePath} />
         </div>
     );
 };
