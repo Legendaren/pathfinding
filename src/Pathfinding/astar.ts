@@ -8,17 +8,19 @@ export interface DistanceVertex {
     previous?: string;
 }
 
-class Dijkstras {
+class AStar {
     unvisited: PriorityQueue;
     visited: Set<string>;
     graph: Graph;
     distance: Map<string, DistanceVertex>;
+    heuristic: Map<string, DistanceVertex>;
 
     constructor(graph: Graph) {
         this.unvisited = new PriorityQueue();
         this.visited = new Set();
         this.graph = graph;
         this.distance = new Map();
+        this.heuristic = new Map();
         this.graph.getVertices().forEach((vertexName) => {
             this.distance.set(vertexName, {
                 position: this.graph.getVertex(vertexName)!.getPosition(),
@@ -39,14 +41,28 @@ class Dijkstras {
         return path;
     }
 
+    private manhattanDistance(from: GridPosition, to: GridPosition) {
+        const { x: x0, y: y0 } = from;
+        const { x: x1, y: y1 } = to;
+        return Math.abs(x1 - x0) + Math.abs(y1 - y0);
+    }
+
     calculateShortestPath(start: string, target: string) {
         const distVertex = this.distance.get(start);
         if (!distVertex) {
             throw new Error("Start vertex not found");
         }
-        const pos = this.graph.getVertex(start)!.getPosition();
-        this.distance.set(start, { position: pos, weight: 0 });
-        this.unvisited.push({ name: start, cost: 0 });
+        const startPos = this.graph.getVertex(start)!.getPosition();
+        const targetPos = this.graph.getVertex(target)!.getPosition();
+        this.distance.set(start, { position: startPos, weight: 0 });
+        this.heuristic.set(start, {
+            position: startPos,
+            weight: this.manhattanDistance(startPos, targetPos),
+        });
+        this.unvisited.push({
+            name: start,
+            cost: this.manhattanDistance(startPos, targetPos),
+        });
 
         let iterations = 0;
         while (!this.unvisited.isEmpty()) {
@@ -60,28 +76,35 @@ class Dijkstras {
 
             if (vertex.name === target) {
                 console.log(this.visited);
-                console.log("iterations dijkstra: ", iterations);
+                console.log("iterations astar: ", iterations);
+                console.log(this.heuristic);
                 return this.pathToTarget(vertex.name);
             }
 
             for (const edge of this.graph.getEdges(vertex.name)) {
+                const toPos = this.graph.getVertex(edge.getTo())!.getPosition();
                 const newWeight =
                     this.distance.get(vertex.name)!.weight + edge.getWeight();
                 const oldWeight = this.distance.get(edge.getTo())!.weight;
+                const newWeightHeuristic =
+                    newWeight + this.manhattanDistance(toPos, targetPos);
 
                 if (newWeight < oldWeight) {
                     this.distance.set(edge.getTo(), {
-                        position: this.graph
-                            .getVertex(edge.getTo())!
-                            .getPosition(),
+                        position: toPos,
                         weight: newWeight,
+                        previous: vertex.name,
+                    });
+                    this.heuristic.set(edge.getTo(), {
+                        position: toPos,
+                        weight: newWeightHeuristic,
                         previous: vertex.name,
                     });
                 }
 
                 this.unvisited.push({
                     name: edge.getTo(),
-                    cost: newWeight,
+                    cost: newWeightHeuristic,
                 });
             }
         }
@@ -90,4 +113,4 @@ class Dijkstras {
     }
 }
 
-export default Dijkstras;
+export default AStar;

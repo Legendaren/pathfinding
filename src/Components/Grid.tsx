@@ -7,6 +7,7 @@ import {
     GridElementState,
     GridElementType,
 } from "../grid-element";
+import AStar from "../Pathfinding/astar";
 import Dijkstras, { DistanceVertex } from "../Pathfinding/dijkstras";
 import {
     generateGridVertices,
@@ -135,7 +136,11 @@ const Grid = ({ size, start, target }: GridProps) => {
         updateGridStates(newStates);
     };
 
-    const calculatePath = () => {
+    const reset = () => {
+        setGridStates(initGridStates(size, start, target));
+    };
+
+    const calculatePathDijkstras = () => {
         const graph = generateGridVertices(gridStates, size);
         const path = new Dijkstras(graph).calculateShortestPath(
             posToString(start),
@@ -146,8 +151,15 @@ const Grid = ({ size, start, target }: GridProps) => {
         setPathVertices(pathWithoutFirstandLastVertex);
     };
 
-    const reset = () => {
-        setGridStates(initGridStates(size, start, target));
+    const calculatePathAStar = () => {
+        const graph = generateGridVertices(gridStates, size);
+        const path = new AStar(graph).calculateShortestPath(
+            posToString(start),
+            posToString(target)
+        );
+        console.log("Found path: ", path);
+        const pathWithoutFirstandLastVertex = path.slice(1, path.length - 1);
+        setPathVertices(pathWithoutFirstandLastVertex);
     };
 
     return (
@@ -165,7 +177,11 @@ const Grid = ({ size, start, target }: GridProps) => {
                     ))}
                 </div>
             ))}
-            <ControlPanel calculatePath={calculatePath} reset={reset} />
+            <ControlPanel
+                calculatePathDijkstra={calculatePathDijkstras}
+                calculatePathAStar={calculatePathAStar}
+                reset={reset}
+            />
         </div>
     );
 };
