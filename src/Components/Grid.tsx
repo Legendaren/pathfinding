@@ -1,14 +1,23 @@
-import React, { useState } from "react";
+import React from "react";
+import { useState } from "react";
+import {
+    createDefault,
+    createPath,
+    createWall,
+    GridElementState,
+    GridElementType,
+} from "../grid-element";
 import Dijkstras, { DistanceVertex } from "../Pathfinding/dijkstras";
 import {
     generateGridVertices,
     GridPosition,
     GridSize,
     initGridStates,
+    posToString,
 } from "../Pathfinding/grid";
 import "./../App.css";
 import ControlPanel from "./ControlPanel";
-import GridElement, { GridElementState, GridElementType } from "./GridElement";
+import GridElement from "./GridElement";
 
 interface GridProps {
     size: GridSize;
@@ -16,87 +25,143 @@ interface GridProps {
     target: GridPosition;
 }
 
+type StatePositionPair = [GridElementState, GridPosition];
+
 const Grid = ({ size, start, target }: GridProps) => {
-    const [isMouseDown, setMouseDown] = useState(false);
+    const [isLeftMouseDown, setLeftMouseDown] = useState(false);
+    const [isRightMouseDown, setRightMouseDown] = useState(false);
     const [gridStates, setGridStates] = useState(
         initGridStates(size, start, target)
     );
 
-    const updateGridState = (newState: GridElementState) => {
-        updateGridStates([newState]);
-    };
-
-    const updateGridStates = (newStates: GridElementState[]) => {
+    const updateGridStates = (newStates: StatePositionPair[]) => {
         const gridStatesCopy = [...gridStates];
-        newStates.forEach((state) => {
-            gridStatesCopy[state.position.y][state.position.x] = state;
-        });
+        for (const newState of newStates) {
+            const [elementState, { x, y }] = newState;
+            gridStatesCopy[y][x] = elementState;
+        }
         setGridStates(gridStatesCopy);
     };
 
-    const setMarked = (state: GridElementState) => {
-        updateGridState({ ...state, marked: true });
+    const updateGridState = (
+        position: GridPosition,
+        newState: GridElementState
+    ) => {
+        updateGridStates([[newState, position]]);
     };
 
-    const onMouseDownHandler = (state: GridElementState) => {
-        setMarked(state);
-        setMouseDown(true);
+    const setWall = (position: GridPosition) => {
+        updateGridState(position, createWall(position));
     };
 
-    const onMouseUpHandler = (state: GridElementState) => {
-        setMouseDown(false);
+    const setDefault = (position: GridPosition) => {
+        updateGridState(position, createDefault(position));
     };
 
-    const onMouseEnterHandler = (state: GridElementState) => {
-        if (isMouseDown && !state.marked) {
-            setMarked(state);
+    const onMouseDownLeft = (state: GridElementState) => {
+        const isStart = state.type === GridElementType.START;
+        const isTarget = state.type === GridElementType.TARGET;
+        if (!isStart && !isTarget) setWall(state.position);
+        setLeftMouseDown(true);
+    };
+
+    const onMouseDownRight = (state: GridElementState) => {
+        const isWall = state.type === GridElementType.WALL;
+        if (isWall) setDefault(state.position);
+        setRightMouseDown(true);
+    };
+
+    const onMouseDownHandler = (
+        e: React.MouseEvent<HTMLElement, MouseEvent>,
+        state: GridElementState
+    ) => {
+        const isLeft = e.button === 0;
+        const isRight = e.button === 2;
+        if (isLeft) {
+            onMouseDownLeft(state);
+        } else if (isRight) {
+            onMouseDownRight(state);
         }
     };
 
+    const onMouseUpLeft = (state: GridElementState) => {
+        setLeftMouseDown(false);
+    };
+
+    const onMouseUpRight = (state: GridElementState) => {
+        setRightMouseDown(false);
+    };
+
+    const onMouseUpHandler = (
+        e: React.MouseEvent<HTMLElement, MouseEvent>,
+        state: GridElementState
+    ) => {
+        const isLeft = e.button === 0;
+        const isRight = e.button === 2;
+        if (isLeft) {
+            onMouseUpLeft(state);
+        } else if (isRight) {
+            onMouseUpRight(state);
+        }
+    };
+
+    const onMouseEnterLeft = (state: GridElementState) => {
+        const isStart = state.type === GridElementType.START;
+        const isTarget = state.type === GridElementType.TARGET;
+        const isWall = state.type === GridElementType.WALL;
+        const isValidPos = isLeftMouseDown && !isWall && !isStart && !isTarget;
+        if (isValidPos) setWall(state.position);
+    };
+
+    const onMouseEnterRight = (state: GridElementState) => {
+        const isWall = state.type === GridElementType.WALL;
+        if (isRightMouseDown && isWall) setDefault(state.position);
+    };
+
+    const onMouseEnterHandler = (
+        e: React.MouseEvent<HTMLElement, MouseEvent>,
+        state: GridElementState
+    ) => {
+        onMouseEnterLeft(state);
+        onMouseEnterRight(state);
+    };
+
     const setPathVertices = (path: DistanceVertex[]) => {
-        const newStates: GridElementState[] = [];
-        path.forEach((vertex) => {
-            const { x, y } = vertex.position;
-            newStates.push({ ...gridStates[y][x], type: "path" });
-        });
+        const newStates: StatePositionPair[] = [];
+        for (const vertex of path) {
+            const pathVertex = createPath(vertex.position);
+            newStates.push([pathVertex, vertex.position]);
+        }
         updateGridStates(newStates);
     };
 
     const calculatePath = () => {
         const graph = generateGridVertices(gridStates, size);
-        const path = new Dijkstras(graph).calculateShortestPath("0,0", "15,15");
+        const path = new Dijkstras(graph).calculateShortestPath(
+            posToString(start),
+            posToString(target)
+        );
         console.log("Found path: ", path);
-        setPathVertices(path);
+        const pathWithoutFirstandLastVertex = path.slice(1, path.length - 1);
+        setPathVertices(pathWithoutFirstandLastVertex);
     };
 
     const reset = () => {
-        const gridStatesCopy = [...gridStates];
-        gridStatesCopy.forEach((row) => {
-            row.forEach((state) => {
-                state.type = "default";
-                state.marked = false;
-            });
-        });
-        setGridStates(gridStatesCopy);
+        setGridStates(initGridStates(size, start, target));
     };
 
-    const gridElements = gridStates.map((row) =>
-        row.map((elem) => (
-            <GridElement
-                state={elem}
-                onMouseDown={onMouseDownHandler}
-                onMouseUp={onMouseUpHandler}
-                onMouseEnter={onMouseEnterHandler}
-            />
-        ))
-    );
-
     return (
-        <div className="grid">
-            {gridElements.map((row, i) => (
-                <div key={"row" + i.toString()} className="grid-row">
+        <div className="grid" onContextMenu={(e) => e.preventDefault()}>
+            {gridStates.map((row, i) => (
+                <div key={i} className={"grid-row"}>
                     {row.map((elem, j) => (
-                        <div key={"elem" + j.toString()}>{elem}</div>
+                        <GridElement
+                            key={j}
+                            state={elem}
+                            onMouseDown={onMouseDownHandler}
+                            onMouseUp={onMouseUpHandler}
+                            onMouseEnter={onMouseEnterHandler}
+                        />
                     ))}
                 </div>
             ))}

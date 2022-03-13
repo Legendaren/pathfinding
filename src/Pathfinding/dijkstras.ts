@@ -50,18 +50,18 @@ class Dijkstras {
 
         while (!this.unvisited.isEmpty()) {
             const vertex = this.unvisited.pop();
-            // console.log("pop: ", vertex);
+
             if (this.visited.has(vertex.name)) {
                 continue;
             }
             this.visited.add(vertex.name);
 
             if (vertex.name === target) {
+                console.log(this.visited);
                 return this.pathToTarget(vertex.name);
             }
 
             for (const edge of this.graph.getEdges(vertex.name)) {
-                // console.log("edge to: ", edge.getTo());
                 const newWeight =
                     this.distance.get(vertex.name)!.weight + edge.getWeight();
                 const oldWeight = this.distance.get(edge.getTo())!.weight;

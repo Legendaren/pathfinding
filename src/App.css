@@ -5,9 +5,10 @@
 .grid {
     display: flex;
     flex-direction: column;
-    border: 1px solid black;
-    margin: 10px;
+    margin: 0;
     padding: 10px;
+    justify-content: center;
+    align-items: center;
 }
 
 .grid-row {
@@ -25,7 +26,7 @@
     background-color: lightgray;
 }
 
-.grid-element.marked {
+.grid-element.wall {
     background-color: black;
 }
 
@@ -44,5 +45,12 @@
 }
 
 .control-panel {
+    margin: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.control-panel .button {
     margin: 10px;
 }

@@ -1,6 +1,5 @@
 import React from "react";
 import "./App.css";
-import ControlPanel from "./Components/ControlPanel";
 import Grid from "./Components/Grid";
 
 function App() {

@@ -9,8 +9,12 @@ interface ControlPanelProps {
 const ControlPanel = ({ calculatePath, reset }: ControlPanelProps) => {
     return (
         <div className="control-panel">
-            <button onClick={calculatePath}>Calculate Path</button>
-            <button onClick={reset}>Reset</button>
+            <button onClick={calculatePath} className="button">
+                Calculate Path
+            </button>
+            <button onClick={reset} className="button">
+                Reset
+            </button>
         </div>
     );
 };

@@ -1,20 +1,17 @@
-import React from "react";
-import { GridPosition } from "../Pathfinding/grid";
+import React, { useEffect } from "react";
+import { GridElementState } from "../grid-element";
 import "./../App.css";
 
-export interface GridElementState {
-    position: GridPosition;
-    marked: boolean;
-    type: GridElementType;
-}
-
-export type GridElementType = "default" | "start" | "target" | "path";
+type Handler = (
+    e: React.MouseEvent<HTMLElement, MouseEvent>,
+    state: GridElementState
+) => void;
 
 export interface GridElementProps {
     state: GridElementState;
-    onMouseEnter: (state: GridElementState) => void;
-    onMouseDown: (state: GridElementState) => void;
-    onMouseUp: (state: GridElementState) => void;
+    onMouseEnter: Handler;
+    onMouseDown: Handler;
+    onMouseUp: Handler;
 }
 
 const GridElement = ({
@@ -23,20 +20,26 @@ const GridElement = ({
     onMouseDown,
     onMouseUp,
 }: GridElementProps) => {
-    const classNames = ["grid-element"];
-    if (state.marked) {
-        classNames.push("marked");
-    }
-    if (state.type !== "default") {
-        classNames.push(state.type);
-    }
+    const classNames = ["grid-element", ...state.classNames];
+
+    useEffect(() => {
+        // console.log("Render");
+    }, [state, onMouseEnter, onMouseDown, onMouseUp]);
+
+    const prevDef = (
+        e: React.MouseEvent<HTMLElement, MouseEvent>,
+        handlerFunc: Handler
+    ) => {
+        e.preventDefault();
+        handlerFunc(e, state);
+    };
 
     return (
         <div
             className={classNames.join(" ")}
-            onMouseDown={() => onMouseDown(state)}
-            onMouseUp={() => onMouseUp(state)}
-            onMouseEnter={() => onMouseEnter(state)}
+            onMouseDown={(e) => prevDef(e, onMouseDown)}
+            onMouseUp={(e) => prevDef(e, onMouseUp)}
+            onMouseEnter={(e) => prevDef(e, onMouseEnter)}
         ></div>
     );
 };

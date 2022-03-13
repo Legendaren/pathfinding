@@ -1,4 +1,10 @@
-import { GridElementState, GridElementType } from "../Components/GridElement";
+import {
+    createDefault,
+    createStart,
+    createTarget,
+    GridElementState,
+    GridElementType,
+} from "../grid-element";
 import Graph, { Edge, Vertex } from "./graph";
 
 export interface GridPosition {
@@ -17,7 +23,7 @@ export const inBounds = (pos: GridPosition, gridSize: GridSize) => {
     return xInBounds && yInBounds;
 };
 
-export const adjacentNodePositions = (pos: GridPosition): GridPosition[] => {
+export const adjacentVertexPositions = (pos: GridPosition): GridPosition[] => {
     const left: GridPosition = { x: pos.x - 1, y: pos.y };
     const right: GridPosition = { x: pos.x + 1, y: pos.y };
     const up: GridPosition = { x: pos.x, y: pos.y - 1 };
@@ -39,22 +45,16 @@ export const initGridStates = (
         const row: GridElementState[] = [];
         for (let j = 0; j < size.columns; j++) {
             const position = { x: j, y: i };
-            let type: GridElementType = "default";
-            const isStart = position.x === start.x && position.y === start.y;
-            const isTarget = position.x === target.x && position.y === target.y;
-            if (isStart) {
-                type = "start";
-            } else if (isTarget) {
-                type = "target";
-            }
-            row.push({
-                marked: false,
-                position: position,
-                type: type,
-            });
+            row.push(createDefault(position));
         }
         gridStates.push(row);
     }
+
+    // Set start vertex
+    gridStates[start.y][start.x] = createStart(start);
+    // Set target vertex
+    gridStates[target.y][target.x] = createTarget(target);
+
     return gridStates;
 };
 
@@ -66,24 +66,25 @@ export const generateGridVertices = (
 
     for (let i = 0; i < gridSize.rows; i++) {
         for (let j = 0; j < gridSize.columns; j++) {
-            if (states[i][j].marked) continue;
+            if (states[i][j].type === GridElementType.WALL) continue;
 
             const pos: GridPosition = { x: j, y: i };
 
             const vertex = new Vertex(posToString(pos), pos);
             graph.addVertex(vertex);
 
-            // Add edges to adjacent vertices that are not marked
-            adjacentNodePositions(pos)
-                .filter(
-                    (p) => inBounds(p, gridSize) && !states[p.y][p.x].marked
-                )
-                .forEach((p) => {
-                    graph.addEdge(
-                        vertex.getName(),
-                        new Edge(vertex.getName(), posToString(p), 1)
-                    );
-                });
+            const adjValidVertices = adjacentVertexPositions(pos).filter(
+                (p) =>
+                    inBounds(p, gridSize) &&
+                    states[p.y][p.x].type !== GridElementType.WALL
+            );
+
+            for (const vertexPos of adjValidVertices) {
+                graph.addEdge(
+                    vertex.getName(),
+                    new Edge(vertex.getName(), posToString(vertexPos), 1)
+                );
+            }
         }
     }
     return graph;
