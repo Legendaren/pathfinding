@@ -1,5 +1,6 @@
 import React from "react";
 import { useState } from "react";
+import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import {
     createDefault,
     createPath,
@@ -18,7 +19,7 @@ import {
 } from "../Pathfinding/grid";
 import "./../App.css";
 import ControlPanel from "./ControlPanel";
-import GridElement from "./GridElement";
+import GridElement, { Handler } from "./GridElement";
 
 interface GridProps {
     size: GridSize;
@@ -29,11 +30,16 @@ interface GridProps {
 type StatePositionPair = [GridElementState, GridPosition];
 
 const Grid = ({ size, start, target }: GridProps) => {
+    const [startPos, setStartPos] = useState(start);
+    const [targetPos, setTargetPos] = useState(target);
     const [isLeftMouseDown, setLeftMouseDown] = useState(false);
     const [isRightMouseDown, setRightMouseDown] = useState(false);
     const [gridStates, setGridStates] = useState(
-        initGridStates(size, start, target)
+        initGridStates(size, startPos, targetPos)
     );
+    const [draggedElement, setDraggedElement] = useState<
+        GridElementState | undefined
+    >(undefined);
 
     const updateGridStates = (newStates: StatePositionPair[]) => {
         const gridStatesCopy = [...gridStates];
@@ -59,10 +65,38 @@ const Grid = ({ size, start, target }: GridProps) => {
         updateGridState(position, createDefault(position));
     };
 
+    const handleDrag = (state: GridElementState) => {
+        const isStart = state.type === GridElementType.START;
+        const isTarget = state.type === GridElementType.TARGET;
+        const isWall = state.type === GridElementType.WALL;
+        const isValidPos = !isStart && !isTarget && !isWall;
+        if (!draggedElement || !isValidPos) return false;
+
+        setDefault(draggedElement.position);
+        const newDraggedElement: GridElementState = {
+            ...draggedElement,
+            position: state.position,
+        };
+
+        if (newDraggedElement.type === GridElementType.START) {
+            setStartPos(state.position);
+        } else if (newDraggedElement.type === GridElementType.TARGET) {
+            setTargetPos(state.position);
+        }
+
+        updateGridState(state.position, newDraggedElement);
+        setDraggedElement(newDraggedElement);
+        return true;
+    };
+
     const onMouseDownLeft = (state: GridElementState) => {
         const isStart = state.type === GridElementType.START;
         const isTarget = state.type === GridElementType.TARGET;
-        if (!isStart && !isTarget) setWall(state.position);
+        if (isStart || isTarget) {
+            setDraggedElement(state);
+        } else {
+            setWall(state.position);
+        }
         setLeftMouseDown(true);
     };
 
@@ -72,10 +106,7 @@ const Grid = ({ size, start, target }: GridProps) => {
         setRightMouseDown(true);
     };
 
-    const onMouseDownHandler = (
-        e: React.MouseEvent<HTMLElement, MouseEvent>,
-        state: GridElementState
-    ) => {
+    const onMouseDownHandler: Handler = (e, state) => {
         const isLeft = e.button === 0;
         const isRight = e.button === 2;
         if (isLeft) {
@@ -85,28 +116,19 @@ const Grid = ({ size, start, target }: GridProps) => {
         }
     };
 
-    const onMouseUpLeft = (state: GridElementState) => {
-        setLeftMouseDown(false);
-    };
-
-    const onMouseUpRight = (state: GridElementState) => {
-        setRightMouseDown(false);
-    };
-
-    const onMouseUpHandler = (
-        e: React.MouseEvent<HTMLElement, MouseEvent>,
-        state: GridElementState
-    ) => {
+    const onMouseUpHandler: Handler = (e, state) => {
         const isLeft = e.button === 0;
         const isRight = e.button === 2;
         if (isLeft) {
-            onMouseUpLeft(state);
+            setLeftMouseDown(false);
+            setDraggedElement(undefined);
         } else if (isRight) {
-            onMouseUpRight(state);
+            setRightMouseDown(false);
         }
     };
 
     const onMouseEnterLeft = (state: GridElementState) => {
+        if (handleDrag(state)) return;
         const isStart = state.type === GridElementType.START;
         const isTarget = state.type === GridElementType.TARGET;
         const isWall = state.type === GridElementType.WALL;
@@ -119,10 +141,7 @@ const Grid = ({ size, start, target }: GridProps) => {
         if (isRightMouseDown && isWall) setDefault(state.position);
     };
 
-    const onMouseEnterHandler = (
-        e: React.MouseEvent<HTMLElement, MouseEvent>,
-        state: GridElementState
-    ) => {
+    const onMouseEnterHandler: Handler = (e, state) => {
         onMouseEnterLeft(state);
         onMouseEnterRight(state);
     };
@@ -143,8 +162,8 @@ const Grid = ({ size, start, target }: GridProps) => {
     const calculatePathDijkstras = () => {
         const graph = generateGridVertices(gridStates, size);
         const path = new Dijkstras(graph).calculateShortestPath(
-            posToString(start),
-            posToString(target)
+            posToString(startPos),
+            posToString(targetPos)
         );
         console.log("Found path: ", path);
         const pathWithoutFirstandLastVertex = path.slice(1, path.length - 1);
@@ -154,8 +173,8 @@ const Grid = ({ size, start, target }: GridProps) => {
     const calculatePathAStar = () => {
         const graph = generateGridVertices(gridStates, size);
         const path = new AStar(graph).calculateShortestPath(
-            posToString(start),
-            posToString(target)
+            posToString(startPos),
+            posToString(targetPos)
         );
         console.log("Found path: ", path);
         const pathWithoutFirstandLastVertex = path.slice(1, path.length - 1);

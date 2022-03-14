@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { GridElementState } from "../grid-element";
 import "./../App.css";
 
-type Handler = (
+export type Handler = (
     e: React.MouseEvent<HTMLElement, MouseEvent>,
     state: GridElementState
 ) => void;
@@ -40,6 +40,7 @@ const GridElement = ({
             onMouseDown={(e) => prevDef(e, onMouseDown)}
             onMouseUp={(e) => prevDef(e, onMouseUp)}
             onMouseEnter={(e) => prevDef(e, onMouseEnter)}
+            draggable
         ></div>
     );
 };
