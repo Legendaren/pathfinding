@@ -1,4 +1,3 @@
-import { stringify } from "querystring";
 import React, { useState } from "react";
 import "./../App.css";
 
@@ -15,18 +14,25 @@ const ControlPanel = ({
 }: ControlPanelProps) => {
     const [pathfindingFuncName, setPathfindingFuncName] = useState("Dijkstras");
 
-    const nameToFunc = new Map<string, () => void>();
+    const nameToFunc: Map<string, () => void> = new Map();
     nameToFunc.set("Dijkstras", calculatePathDijkstra);
     nameToFunc.set("A*", calculatePathAStar);
 
     return (
         <div className="control-panel">
             <select onChange={(e) => setPathfindingFuncName(e.target.value)}>
-                <option value="Dijkstras">Dijkstras</option>
-                <option value="A*">A*</option>
+                {Array.from(nameToFunc.entries()).map(([name, func], i) => (
+                    <option value={name} key={i}>
+                        {name}
+                    </option>
+                ))}
             </select>
             <button
-                onClick={() => nameToFunc.get(pathfindingFuncName)!()}
+                onClick={() => {
+                    const pathfindingFunc = nameToFunc.get(pathfindingFuncName);
+                    if (pathfindingFunc) pathfindingFunc();
+                    else calculatePathDijkstra();
+                }}
                 className="button"
             >
                 Calculate Path
