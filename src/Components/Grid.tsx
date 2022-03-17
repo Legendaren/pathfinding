@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import { useState } from "react";
-import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import {
     createDefault,
     createPath,
@@ -41,82 +40,99 @@ const Grid = ({ size, start, target }: GridProps) => {
         GridElementState | undefined
     >(undefined);
 
-    const updateGridStates = (newStates: StatePositionPair[]) => {
-        const gridStatesCopy = [...gridStates];
-        for (const newState of newStates) {
-            const [elementState, { x, y }] = newState;
-            gridStatesCopy[y][x] = elementState;
-        }
-        setGridStates(gridStatesCopy);
-    };
+    const leftMouseDownRef = useRef<boolean>();
+    const rightMouseDownRef = useRef<boolean>();
+    const draggedElementRef = useRef<GridElementState | undefined>();
+    leftMouseDownRef.current = isLeftMouseDown;
+    rightMouseDownRef.current = isRightMouseDown;
+    draggedElementRef.current = draggedElement;
 
-    const updateGridState = (
-        position: GridPosition,
-        newState: GridElementState
-    ) => {
-        updateGridStates([[newState, position]]);
-    };
+    const updateGridStates = useCallback((newStates: StatePositionPair[]) => {
+        setGridStates((oldGridStates) => {
+            const gridStatesCopy = [...oldGridStates];
+            for (const newState of newStates) {
+                const [elementState, { x, y }] = newState;
+                gridStatesCopy[y][x] = elementState;
+            }
+            return gridStatesCopy;
+        });
+    }, []);
 
-    const setWall = (position: GridPosition) => {
-        updateGridState(position, createWall(position));
-    };
+    const updateGridState = useCallback(
+        (position: GridPosition, newState: GridElementState) => {
+            updateGridStates([[newState, position]]);
+        },
+        [updateGridStates]
+    );
 
-    const setDefault = (position: GridPosition) => {
-        updateGridState(position, createDefault(position));
-    };
+    const handleDrag = useCallback(
+        (state: GridElementState) => {
+            const isStart = state.type === GridElementType.START;
+            const isTarget = state.type === GridElementType.TARGET;
+            const isWall = state.type === GridElementType.WALL;
+            const isValidPos = !isStart && !isTarget && !isWall;
+            if (!draggedElementRef.current || !isValidPos) return false;
 
-    const handleDrag = (state: GridElementState) => {
-        const isStart = state.type === GridElementType.START;
-        const isTarget = state.type === GridElementType.TARGET;
-        const isWall = state.type === GridElementType.WALL;
-        const isValidPos = !isStart && !isTarget && !isWall;
-        if (!draggedElement || !isValidPos) return false;
+            updateGridState(
+                draggedElementRef.current.position,
+                createDefault(draggedElementRef.current.position)
+            );
+            const newDraggedElement: GridElementState = {
+                ...draggedElementRef.current,
+                position: state.position,
+            };
 
-        setDefault(draggedElement.position);
-        const newDraggedElement: GridElementState = {
-            ...draggedElement,
-            position: state.position,
-        };
+            if (newDraggedElement.type === GridElementType.START) {
+                setStartPos(state.position);
+            } else if (newDraggedElement.type === GridElementType.TARGET) {
+                setTargetPos(state.position);
+            }
 
-        if (newDraggedElement.type === GridElementType.START) {
-            setStartPos(state.position);
-        } else if (newDraggedElement.type === GridElementType.TARGET) {
-            setTargetPos(state.position);
-        }
+            updateGridState(state.position, newDraggedElement);
+            setDraggedElement(newDraggedElement);
+            return true;
+        },
+        [updateGridState]
+    );
 
-        updateGridState(state.position, newDraggedElement);
-        setDraggedElement(newDraggedElement);
-        return true;
-    };
+    const onMouseDownLeft = useCallback(
+        (state: GridElementState) => {
+            const isStart = state.type === GridElementType.START;
+            const isTarget = state.type === GridElementType.TARGET;
+            if (isStart || isTarget) {
+                setDraggedElement(state);
+            } else {
+                updateGridState(state.position, createWall(state.position));
+            }
+            setLeftMouseDown(true);
+        },
+        [updateGridState]
+    );
 
-    const onMouseDownLeft = (state: GridElementState) => {
-        const isStart = state.type === GridElementType.START;
-        const isTarget = state.type === GridElementType.TARGET;
-        if (isStart || isTarget) {
-            setDraggedElement(state);
-        } else {
-            setWall(state.position);
-        }
-        setLeftMouseDown(true);
-    };
+    const onMouseDownRight = useCallback(
+        (state: GridElementState) => {
+            const isWall = state.type === GridElementType.WALL;
+            if (isWall)
+                updateGridState(state.position, createDefault(state.position));
+            setRightMouseDown(true);
+        },
+        [updateGridState]
+    );
 
-    const onMouseDownRight = (state: GridElementState) => {
-        const isWall = state.type === GridElementType.WALL;
-        if (isWall) setDefault(state.position);
-        setRightMouseDown(true);
-    };
+    const onMouseDownHandler: Handler = useCallback(
+        (e, state) => {
+            const isLeft = e.button === 0;
+            const isRight = e.button === 2;
+            if (isLeft) {
+                onMouseDownLeft(state);
+            } else if (isRight) {
+                onMouseDownRight(state);
+            }
+        },
+        [onMouseDownLeft, onMouseDownRight]
+    );
 
-    const onMouseDownHandler: Handler = (e, state) => {
-        const isLeft = e.button === 0;
-        const isRight = e.button === 2;
-        if (isLeft) {
-            onMouseDownLeft(state);
-        } else if (isRight) {
-            onMouseDownRight(state);
-        }
-    };
-
-    const onMouseUpHandler: Handler = (e, state) => {
+    const onMouseUpHandler: Handler = useCallback((e, state) => {
         const isLeft = e.button === 0;
         const isRight = e.button === 2;
         if (isLeft) {
@@ -125,26 +141,38 @@ const Grid = ({ size, start, target }: GridProps) => {
         } else if (isRight) {
             setRightMouseDown(false);
         }
-    };
+    }, []);
 
-    const onMouseEnterLeft = (state: GridElementState) => {
-        if (handleDrag(state)) return;
-        const isStart = state.type === GridElementType.START;
-        const isTarget = state.type === GridElementType.TARGET;
-        const isWall = state.type === GridElementType.WALL;
-        const isValidPos = isLeftMouseDown && !isWall && !isStart && !isTarget;
-        if (isValidPos) setWall(state.position);
-    };
+    const onMouseEnterLeft = useCallback(
+        (state: GridElementState) => {
+            if (handleDrag(state)) return;
+            const isStart = state.type === GridElementType.START;
+            const isTarget = state.type === GridElementType.TARGET;
+            const isWall = state.type === GridElementType.WALL;
+            const isValidPos =
+                leftMouseDownRef.current && !isWall && !isStart && !isTarget;
+            if (isValidPos)
+                updateGridState(state.position, createWall(state.position));
+        },
+        [updateGridState, handleDrag]
+    );
 
-    const onMouseEnterRight = (state: GridElementState) => {
-        const isWall = state.type === GridElementType.WALL;
-        if (isRightMouseDown && isWall) setDefault(state.position);
-    };
+    const onMouseEnterRight = useCallback(
+        (state: GridElementState) => {
+            const isWall = state.type === GridElementType.WALL;
+            if (rightMouseDownRef.current && isWall)
+                updateGridState(state.position, createDefault(state.position));
+        },
+        [updateGridState]
+    );
 
-    const onMouseEnterHandler: Handler = (e, state) => {
-        onMouseEnterLeft(state);
-        onMouseEnterRight(state);
-    };
+    const onMouseEnterHandler: Handler = useCallback(
+        (e, state) => {
+            onMouseEnterLeft(state);
+            onMouseEnterRight(state);
+        },
+        [onMouseEnterLeft, onMouseEnterRight]
+    );
 
     const setPathVertices = (path: DistanceVertex[]) => {
         const newStates: StatePositionPair[] = [];
@@ -157,6 +185,18 @@ const Grid = ({ size, start, target }: GridProps) => {
 
     const reset = () => {
         setGridStates(initGridStates(size, start, target));
+    };
+
+    const resetCalculatedPath = () => {
+        setGridStates((oldGridStates) =>
+            oldGridStates.map((row) =>
+                row.map((state) =>
+                    state.type === GridElementType.PATH
+                        ? createDefault(state.position)
+                        : state
+                )
+            )
+        );
     };
 
     const calculatePathDijkstras = () => {
@@ -200,6 +240,7 @@ const Grid = ({ size, start, target }: GridProps) => {
                 calculatePathDijkstra={calculatePathDijkstras}
                 calculatePathAStar={calculatePathAStar}
                 reset={reset}
+                resetCalcPath={resetCalculatedPath}
             />
         </div>
     );

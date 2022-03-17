@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { GridElementState } from "../grid-element";
 import "./../App.css";
 
@@ -16,15 +16,12 @@ export interface GridElementProps {
 
 const GridElement = ({
     state,
-    onMouseEnter,
     onMouseDown,
+    onMouseEnter,
     onMouseUp,
 }: GridElementProps) => {
     const classNames = ["grid-element", ...state.classNames];
-
-    useEffect(() => {
-        // console.log("Render");
-    }, [state, onMouseEnter, onMouseDown, onMouseUp]);
+    console.log("Render");
 
     const prevDef = (
         e: React.MouseEvent<HTMLElement, MouseEvent>,
@@ -40,9 +37,8 @@ const GridElement = ({
             onMouseDown={(e) => prevDef(e, onMouseDown)}
             onMouseUp={(e) => prevDef(e, onMouseUp)}
             onMouseEnter={(e) => prevDef(e, onMouseEnter)}
-            draggable
         ></div>
     );
 };
 
-export default GridElement;
+export default React.memo(GridElement);

@@ -5,12 +5,14 @@ interface ControlPanelProps {
     calculatePathDijkstra: () => void;
     calculatePathAStar: () => void;
     reset: () => void;
+    resetCalcPath: () => void;
 }
 
 const ControlPanel = ({
     calculatePathDijkstra,
     calculatePathAStar,
     reset,
+    resetCalcPath,
 }: ControlPanelProps) => {
     const [pathfindingFuncName, setPathfindingFuncName] = useState("Dijkstras");
 
@@ -39,6 +41,9 @@ const ControlPanel = ({
             </button>
             <button onClick={reset} className="button">
                 Reset
+            </button>
+            <button onClick={resetCalcPath} className="button">
+                Reset Path
             </button>
         </div>
     );
