@@ -1,5 +1,5 @@
 import Graph from "./graph";
-import { GridPosition } from "../grid";
+import { GridPosition, ShortestPathFinder } from "../grid";
 import PriorityQueue from "./priority-queue/priority-queue";
 
 export interface DistanceVertex {
@@ -8,7 +8,7 @@ export interface DistanceVertex {
     previous?: string;
 }
 
-class AStar {
+class AStar implements ShortestPathFinder {
     unvisited: PriorityQueue;
     visited: Set<string>;
     graph: Graph;

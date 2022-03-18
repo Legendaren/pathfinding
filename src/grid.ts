@@ -1,10 +1,9 @@
 import {
-    createDefault,
-    createStart,
-    createTarget,
+    GridElementFactory,
     GridElementState,
     GridElementType,
 } from "./grid-element";
+import { DistanceVertex } from "./Pathfinding/astar";
 import Graph, { Edge, Vertex } from "./Pathfinding/graph";
 
 export interface GridPosition {
@@ -15,6 +14,10 @@ export interface GridPosition {
 export interface GridSize {
     rows: number;
     columns: number;
+}
+
+export interface ShortestPathFinder {
+    calculateShortestPath: (start: string, target: string) => DistanceVertex[];
 }
 
 export const inBounds = (pos: GridPosition, gridSize: GridSize) => {
@@ -45,20 +48,20 @@ export const initGridStates = (
         const row: GridElementState[] = [];
         for (let j = 0; j < size.columns; j++) {
             const position = { x: j, y: i };
-            row.push(createDefault(position));
+            row.push(GridElementFactory.createDefault(position));
         }
         gridStates.push(row);
     }
 
     // Set start vertex
-    gridStates[start.y][start.x] = createStart(start);
+    gridStates[start.y][start.x] = GridElementFactory.createStart(start);
     // Set target vertex
-    gridStates[target.y][target.x] = createTarget(target);
+    gridStates[target.y][target.x] = GridElementFactory.createTarget(target);
 
     return gridStates;
 };
 
-export const generateGridVertices = (
+export const generateGraph = (
     states: GridElementState[][],
     gridSize: GridSize
 ): Graph => {

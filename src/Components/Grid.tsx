@@ -1,20 +1,19 @@
 import React, { useCallback, useRef } from "react";
 import { useState } from "react";
 import {
-    createDefault,
-    createPath,
-    createWall,
+    GridElementFactory,
     GridElementState,
     GridElementType,
 } from "../grid-element";
 import AStar from "../Pathfinding/astar";
 import Dijkstras, { DistanceVertex } from "../Pathfinding/dijkstras";
 import {
-    generateGridVertices,
+    generateGraph,
     GridPosition,
     GridSize,
     initGridStates,
     posToString,
+    ShortestPathFinder,
 } from "../grid";
 import "./../App.css";
 import ControlPanel from "./ControlPanel";
@@ -75,7 +74,9 @@ const Grid = ({ size, start, target }: GridProps) => {
 
             updateGridState(
                 draggedElementRef.current.position,
-                createDefault(draggedElementRef.current.position)
+                GridElementFactory.createDefault(
+                    draggedElementRef.current.position
+                )
             );
             const newDraggedElement: GridElementState = {
                 ...draggedElementRef.current,
@@ -102,7 +103,10 @@ const Grid = ({ size, start, target }: GridProps) => {
             if (isStart || isTarget) {
                 setDraggedElement(state);
             } else {
-                updateGridState(state.position, createWall(state.position));
+                updateGridState(
+                    state.position,
+                    GridElementFactory.createWall(state.position)
+                );
             }
             setLeftMouseDown(true);
         },
@@ -113,7 +117,10 @@ const Grid = ({ size, start, target }: GridProps) => {
         (state: GridElementState) => {
             const isWall = state.type === GridElementType.WALL;
             if (isWall)
-                updateGridState(state.position, createDefault(state.position));
+                updateGridState(
+                    state.position,
+                    GridElementFactory.createDefault(state.position)
+                );
             setRightMouseDown(true);
         },
         [updateGridState]
@@ -152,7 +159,10 @@ const Grid = ({ size, start, target }: GridProps) => {
             const isValidPos =
                 leftMouseDownRef.current && !isWall && !isStart && !isTarget;
             if (isValidPos)
-                updateGridState(state.position, createWall(state.position));
+                updateGridState(
+                    state.position,
+                    GridElementFactory.createWall(state.position)
+                );
         },
         [updateGridState, handleDrag]
     );
@@ -161,7 +171,10 @@ const Grid = ({ size, start, target }: GridProps) => {
         (state: GridElementState) => {
             const isWall = state.type === GridElementType.WALL;
             if (rightMouseDownRef.current && isWall)
-                updateGridState(state.position, createDefault(state.position));
+                updateGridState(
+                    state.position,
+                    GridElementFactory.createDefault(state.position)
+                );
         },
         [updateGridState]
     );
@@ -177,42 +190,26 @@ const Grid = ({ size, start, target }: GridProps) => {
     const setPathVertices = (path: DistanceVertex[]) => {
         const newStates: StatePositionPair[] = [];
         for (const vertex of path) {
-            const pathVertex = createPath(vertex.position);
+            const pathVertex = GridElementFactory.createPath(vertex.position);
             newStates.push([pathVertex, vertex.position]);
         }
         updateGridStates(newStates);
     };
 
-    const reset = () => {
-        setGridStates(initGridStates(size, start, target));
-    };
-
-    const resetCalculatedPath = () => {
+    const clearGrid = (type: GridElementType) => {
         setGridStates((oldGridStates) =>
             oldGridStates.map((row) =>
                 row.map((state) =>
-                    state.type === GridElementType.PATH
-                        ? createDefault(state.position)
+                    state.type === type
+                        ? GridElementFactory.createDefault(state.position)
                         : state
                 )
             )
         );
     };
 
-    const calculatePathDijkstras = () => {
-        const graph = generateGridVertices(gridStates, size);
-        const path = new Dijkstras(graph).calculateShortestPath(
-            posToString(startPos),
-            posToString(targetPos)
-        );
-        console.log("Found path: ", path);
-        const pathWithoutFirstandLastVertex = path.slice(1, path.length - 1);
-        setPathVertices(pathWithoutFirstandLastVertex);
-    };
-
-    const calculatePathAStar = () => {
-        const graph = generateGridVertices(gridStates, size);
-        const path = new AStar(graph).calculateShortestPath(
+    const calculatePath = (pathfinder: ShortestPathFinder) => {
+        const path = pathfinder.calculateShortestPath(
             posToString(startPos),
             posToString(targetPos)
         );
@@ -237,10 +234,10 @@ const Grid = ({ size, start, target }: GridProps) => {
                 </div>
             ))}
             <ControlPanel
-                calculatePathDijkstra={calculatePathDijkstras}
-                calculatePathAStar={calculatePathAStar}
-                reset={reset}
-                resetCalcPath={resetCalculatedPath}
+                calculatePath={calculatePath}
+                clearWalls={() => clearGrid(GridElementType.WALL)}
+                clearPath={() => clearGrid(GridElementType.PATH)}
+                graph={generateGraph(gridStates, size)}
             />
         </div>
     );

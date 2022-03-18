@@ -11,45 +11,36 @@ export enum GridElementType {
 export interface GridElementState {
     position: GridPosition;
     type: GridElementType;
-    classNames: string[];
 }
 
-export const createDefault = (position: GridPosition): GridElementState => {
-    return {
-        position: position,
-        type: GridElementType.DEFAULT,
-        classNames: [],
-    };
-};
+export class GridElementFactory {
+    private static createGridElement(
+        position: GridPosition,
+        type: GridElementType
+    ) {
+        return {
+            position: position,
+            type: type,
+        };
+    }
 
-export const createWall = (position: GridPosition): GridElementState => {
-    return {
-        position: position,
-        type: GridElementType.WALL,
-        classNames: ["wall"],
-    };
-};
+    static createDefault(position: GridPosition): GridElementState {
+        return this.createGridElement(position, GridElementType.DEFAULT);
+    }
 
-export const createStart = (position: GridPosition): GridElementState => {
-    return {
-        position: position,
-        type: GridElementType.START,
-        classNames: ["start"],
-    };
-};
+    static createWall(position: GridPosition): GridElementState {
+        return this.createGridElement(position, GridElementType.WALL);
+    }
 
-export const createTarget = (position: GridPosition): GridElementState => {
-    return {
-        position: position,
-        type: GridElementType.TARGET,
-        classNames: ["target"],
-    };
-};
+    static createStart(position: GridPosition): GridElementState {
+        return this.createGridElement(position, GridElementType.START);
+    }
 
-export const createPath = (position: GridPosition): GridElementState => {
-    return {
-        position: position,
-        type: GridElementType.PATH,
-        classNames: ["path"],
-    };
-};
+    static createTarget(position: GridPosition): GridElementState {
+        return this.createGridElement(position, GridElementType.TARGET);
+    }
+
+    static createPath(position: GridPosition): GridElementState {
+        return this.createGridElement(position, GridElementType.PATH);
+    }
+}

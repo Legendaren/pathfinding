@@ -1,5 +1,5 @@
 import React from "react";
-import { GridElementState } from "../grid-element";
+import { GridElementState, GridElementType } from "../grid-element";
 import "./../App.css";
 
 export type Handler = (
@@ -14,13 +14,20 @@ export interface GridElementProps {
     onMouseUp: Handler;
 }
 
+const typeToClassName = new Map<GridElementType, string>([
+    [GridElementType.DEFAULT, ""],
+    [GridElementType.START, "start"],
+    [GridElementType.TARGET, "target"],
+    [GridElementType.WALL, "wall"],
+    [GridElementType.PATH, "path"],
+]);
+
 const GridElement = ({
     state,
     onMouseDown,
     onMouseEnter,
     onMouseUp,
 }: GridElementProps) => {
-    const classNames = ["grid-element", ...state.classNames];
     console.log("Render");
 
     const prevDef = (
@@ -33,7 +40,7 @@ const GridElement = ({
 
     return (
         <div
-            className={classNames.join(" ")}
+            className={"grid-element " + typeToClassName.get(state.type) || ""}
             onMouseDown={(e) => prevDef(e, onMouseDown)}
             onMouseUp={(e) => prevDef(e, onMouseUp)}
             onMouseEnter={(e) => prevDef(e, onMouseEnter)}

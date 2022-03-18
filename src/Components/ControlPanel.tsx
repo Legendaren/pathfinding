@@ -1,49 +1,54 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { ShortestPathFinder } from "../grid";
+import AStar from "../Pathfinding/astar";
+import Dijkstras from "../Pathfinding/dijkstras";
+import Graph from "../Pathfinding/graph";
 import "./../App.css";
 
 interface ControlPanelProps {
-    calculatePathDijkstra: () => void;
-    calculatePathAStar: () => void;
-    reset: () => void;
-    resetCalcPath: () => void;
+    calculatePath: (pathfindingFunc: ShortestPathFinder) => void;
+    clearWalls: () => void;
+    clearPath: () => void;
+    graph: Graph;
 }
 
 const ControlPanel = ({
-    calculatePathDijkstra,
-    calculatePathAStar,
-    reset,
-    resetCalcPath,
+    calculatePath,
+    clearWalls,
+    clearPath,
+    graph,
 }: ControlPanelProps) => {
-    const [pathfindingFuncName, setPathfindingFuncName] = useState("Dijkstras");
+    const [pathfindingFuncName, setPathfindingFuncName] =
+        useState("Dijkstra's");
 
-    const nameToFunc: Map<string, () => void> = new Map();
-    nameToFunc.set("Dijkstras", calculatePathDijkstra);
-    nameToFunc.set("A*", calculatePathAStar);
+    const nameToFunc = new Map<string, ShortestPathFinder>([
+        ["Dijkstra's", new Dijkstras(graph)],
+        ["A*", new AStar(graph)],
+    ]);
+
+    const calculateOnClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        const pathfindingFunc = nameToFunc.get(pathfindingFuncName);
+        if (pathfindingFunc) calculatePath(pathfindingFunc);
+        else console.log("Pathfinding function not found");
+    };
 
     return (
         <div className="control-panel">
             <select onChange={(e) => setPathfindingFuncName(e.target.value)}>
-                {Array.from(nameToFunc.entries()).map(([name, func], i) => (
+                {Array.from(nameToFunc.keys()).map((name, i) => (
                     <option value={name} key={i}>
                         {name}
                     </option>
                 ))}
             </select>
-            <button
-                onClick={() => {
-                    const pathfindingFunc = nameToFunc.get(pathfindingFuncName);
-                    if (pathfindingFunc) pathfindingFunc();
-                    else calculatePathDijkstra();
-                }}
-                className="button"
-            >
+            <button onClick={calculateOnClick} className="button">
                 Calculate Path
             </button>
-            <button onClick={reset} className="button">
-                Reset
+            <button onClick={clearWalls} className="button">
+                Clear Walls
             </button>
-            <button onClick={resetCalcPath} className="button">
-                Reset Path
+            <button onClick={clearPath} className="button">
+                Clear Path
             </button>
         </div>
     );
