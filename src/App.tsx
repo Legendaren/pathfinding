@@ -6,7 +6,7 @@ function App() {
     return (
         <div>
             <Grid
-                size={{ rows: 40, columns: 40 }}
+                size={{ rows: 30, columns: 30 }}
                 start={{ x: 4, y: 4 }}
                 target={{ x: 15, y: 15 }}
             />

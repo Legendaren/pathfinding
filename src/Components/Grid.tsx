@@ -5,8 +5,7 @@ import {
     GridElementState,
     GridElementType,
 } from "../grid-element";
-import AStar from "../Pathfinding/astar";
-import Dijkstras, { DistanceVertex } from "../Pathfinding/dijkstras";
+import { DistanceVertex } from "../Pathfinding/dijkstras";
 import {
     generateGraph,
     GridPosition,
@@ -42,9 +41,13 @@ const Grid = ({ size, start, target }: GridProps) => {
     const leftMouseDownRef = useRef<boolean>();
     const rightMouseDownRef = useRef<boolean>();
     const draggedElementRef = useRef<GridElementState | undefined>();
+    const startPosRef = useRef<GridPosition>();
+    const targetPosRef = useRef<GridPosition>();
     leftMouseDownRef.current = isLeftMouseDown;
     rightMouseDownRef.current = isRightMouseDown;
     draggedElementRef.current = draggedElement;
+    startPosRef.current = startPos;
+    targetPosRef.current = targetPos;
 
     const updateGridStates = useCallback((newStates: StatePositionPair[]) => {
         setGridStates((oldGridStates) => {
@@ -187,16 +190,21 @@ const Grid = ({ size, start, target }: GridProps) => {
         [onMouseEnterLeft, onMouseEnterRight]
     );
 
-    const setPathVertices = (path: DistanceVertex[]) => {
-        const newStates: StatePositionPair[] = [];
-        for (const vertex of path) {
-            const pathVertex = GridElementFactory.createPath(vertex.position);
-            newStates.push([pathVertex, vertex.position]);
-        }
-        updateGridStates(newStates);
-    };
+    const setPathVertices = useCallback(
+        (path: DistanceVertex[]) => {
+            const newStates: StatePositionPair[] = [];
+            for (const vertex of path) {
+                const pathVertex = GridElementFactory.createPath(
+                    vertex.position
+                );
+                newStates.push([pathVertex, vertex.position]);
+            }
+            updateGridStates(newStates);
+        },
+        [updateGridStates]
+    );
 
-    const clearGrid = (type: GridElementType) => {
+    const clearGrid = useCallback((type: GridElementType) => {
         setGridStates((oldGridStates) =>
             oldGridStates.map((row) =>
                 row.map((state) =>
@@ -206,17 +214,27 @@ const Grid = ({ size, start, target }: GridProps) => {
                 )
             )
         );
-    };
+    }, []);
 
-    const calculatePath = (pathfinder: ShortestPathFinder) => {
-        const path = pathfinder.calculateShortestPath(
-            posToString(startPos),
-            posToString(targetPos)
-        );
-        console.log("Found path: ", path);
-        const pathWithoutFirstandLastVertex = path.slice(1, path.length - 1);
-        setPathVertices(pathWithoutFirstandLastVertex);
-    };
+    const calculatePath = useCallback(
+        (pathfinder: ShortestPathFinder) => {
+            setGridStates((oldGridStates) => {
+                const path = pathfinder.calculateShortestPath(
+                    posToString(startPosRef.current!),
+                    posToString(targetPosRef.current!),
+                    generateGraph(oldGridStates, size)
+                );
+                console.log("Found path: ", path);
+                const pathWithoutFirstandLastVertex = path.slice(
+                    1,
+                    path.length - 1
+                );
+                setPathVertices(pathWithoutFirstandLastVertex);
+                return oldGridStates;
+            });
+        },
+        [setPathVertices, size]
+    );
 
     return (
         <div className="grid" onContextMenu={(e) => e.preventDefault()}>
@@ -237,7 +255,6 @@ const Grid = ({ size, start, target }: GridProps) => {
                 calculatePath={calculatePath}
                 clearWalls={() => clearGrid(GridElementType.WALL)}
                 clearPath={() => clearGrid(GridElementType.PATH)}
-                graph={generateGraph(gridStates, size)}
             />
         </div>
     );

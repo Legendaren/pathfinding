@@ -9,21 +9,19 @@ interface ControlPanelProps {
     calculatePath: (pathfindingFunc: ShortestPathFinder) => void;
     clearWalls: () => void;
     clearPath: () => void;
-    graph: Graph;
 }
 
 const ControlPanel = ({
     calculatePath,
     clearWalls,
     clearPath,
-    graph,
 }: ControlPanelProps) => {
     const [pathfindingFuncName, setPathfindingFuncName] =
         useState("Dijkstra's");
 
     const nameToFunc = new Map<string, ShortestPathFinder>([
-        ["Dijkstra's", new Dijkstras(graph)],
-        ["A*", new AStar(graph)],
+        ["Dijkstra's", new Dijkstras()],
+        ["A*", new AStar()],
     ]);
 
     const calculateOnClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {

@@ -17,7 +17,11 @@ export interface GridSize {
 }
 
 export interface ShortestPathFinder {
-    calculateShortestPath: (start: string, target: string) => DistanceVertex[];
+    calculateShortestPath: (
+        start: string,
+        target: string,
+        graph: Graph
+    ) => DistanceVertex[];
 }
 
 export const inBounds = (pos: GridPosition, gridSize: GridSize) => {

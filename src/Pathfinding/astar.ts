@@ -15,18 +15,12 @@ class AStar implements ShortestPathFinder {
     distance: Map<string, DistanceVertex>;
     heuristic: Map<string, DistanceVertex>;
 
-    constructor(graph: Graph) {
+    constructor() {
         this.unvisited = new PriorityQueue();
         this.visited = new Set();
-        this.graph = graph;
+        this.graph = new Graph();
         this.distance = new Map();
         this.heuristic = new Map();
-        this.graph.getVertices().forEach((vertexName) => {
-            this.distance.set(vertexName, {
-                position: this.graph.getVertex(vertexName)!.getPosition(),
-                weight: Infinity,
-            });
-        });
     }
 
     private pathToTarget(target: string) {
@@ -37,7 +31,6 @@ class AStar implements ShortestPathFinder {
             path.push(vertexIterator);
             vertexIterator = this.distance.get(vertexIterator.previous || "");
         }
-        // console.log("distance:", this.distance);
         return path;
     }
 
@@ -47,7 +40,14 @@ class AStar implements ShortestPathFinder {
         return Math.abs(x1 - x0) + Math.abs(y1 - y0);
     }
 
-    calculateShortestPath(start: string, target: string) {
+    calculateShortestPath(start: string, target: string, graph: Graph) {
+        this.graph = graph;
+        this.graph.getVertices().forEach((vertexName) => {
+            this.distance.set(vertexName, {
+                position: this.graph.getVertex(vertexName)!.getPosition(),
+                weight: Infinity,
+            });
+        });
         const distVertex = this.distance.get(start);
         if (!distVertex) {
             throw new Error("Start vertex not found");
