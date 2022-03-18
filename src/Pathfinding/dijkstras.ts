@@ -1,5 +1,5 @@
 import Graph from "./graph";
-import { GridPosition } from "./grid";
+import { GridPosition } from "../grid";
 import PriorityQueue from "./priority-queue/priority-queue";
 
 export interface DistanceVertex {

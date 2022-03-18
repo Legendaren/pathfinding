@@ -15,7 +15,7 @@ import {
     GridSize,
     initGridStates,
     posToString,
-} from "../Pathfinding/grid";
+} from "../grid";
 import "./../App.css";
 import ControlPanel from "./ControlPanel";
 import GridElement, { Handler } from "./GridElement";

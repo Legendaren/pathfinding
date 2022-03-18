@@ -1,4 +1,4 @@
-import { GridPosition } from "./Pathfinding/grid";
+import { GridPosition } from "./grid";
 
 export enum GridElementType {
     DEFAULT,

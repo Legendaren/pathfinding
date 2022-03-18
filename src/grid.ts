@@ -4,8 +4,8 @@ import {
     createTarget,
     GridElementState,
     GridElementType,
-} from "../grid-element";
-import Graph, { Edge, Vertex } from "./graph";
+} from "./grid-element";
+import Graph, { Edge, Vertex } from "./Pathfinding/graph";
 
 export interface GridPosition {
     x: number;
