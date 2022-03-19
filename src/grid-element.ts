@@ -11,6 +11,7 @@ export enum GridElementType {
 export interface GridElementState {
     position: GridPosition;
     type: GridElementType;
+    animationDelay: number;
 }
 
 export class GridElementFactory {
@@ -21,6 +22,17 @@ export class GridElementFactory {
         return {
             position: position,
             type: type,
+            animationDelay: 50,
+        };
+    }
+
+    static createWithAnimationDelay(
+        state: GridElementState,
+        animDelay: number
+    ): GridElementState {
+        return {
+            ...state,
+            animationDelay: animDelay,
         };
     }
 

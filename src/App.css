@@ -40,7 +40,20 @@
     border: 1px solid red;
 }
 
-.grid-element.path {
+/* .grid-element.path {
+    background-color: cyan;
+} */
+
+.fade-enter {
+    background-color: "initial";
+}
+
+.fade-enter-active {
+    background-color: "initial";
+    transition: 500ms linear;
+}
+
+.fade-enter-done {
     background-color: cyan;
 }
 

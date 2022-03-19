@@ -193,12 +193,17 @@ const Grid = ({ size, start, target }: GridProps) => {
     const setPathVertices = useCallback(
         (path: DistanceVertex[]) => {
             const newStates: StatePositionPair[] = [];
-            for (const vertex of path) {
-                const pathVertex = GridElementFactory.createPath(
+            path.forEach((vertex, i) => {
+                const pathGridElement = GridElementFactory.createPath(
                     vertex.position
                 );
+                const pathVertex = GridElementFactory.createWithAnimationDelay(
+                    pathGridElement,
+                    pathGridElement.animationDelay +
+                        pathGridElement.animationDelay * (path.length - i + 1)
+                );
                 newStates.push([pathVertex, vertex.position]);
-            }
+            });
             updateGridStates(newStates);
         },
         [updateGridStates]

@@ -1,6 +1,7 @@
 import React from "react";
 import { GridElementState, GridElementType } from "../grid-element";
 import "./../App.css";
+import { CSSTransition } from "react-transition-group";
 
 export type Handler = (
     e: React.MouseEvent<HTMLElement, MouseEvent>,
@@ -28,8 +29,6 @@ const GridElement = ({
     onMouseEnter,
     onMouseUp,
 }: GridElementProps) => {
-    console.log("Render");
-
     const prevDef = (
         e: React.MouseEvent<HTMLElement, MouseEvent>,
         handlerFunc: Handler
@@ -39,12 +38,21 @@ const GridElement = ({
     };
 
     return (
-        <div
-            className={"grid-element " + typeToClassName.get(state.type) || ""}
-            onMouseDown={(e) => prevDef(e, onMouseDown)}
-            onMouseUp={(e) => prevDef(e, onMouseUp)}
-            onMouseEnter={(e) => prevDef(e, onMouseEnter)}
-        ></div>
+        <CSSTransition
+            in={state.type === GridElementType.PATH}
+            timeout={state.animationDelay}
+            classNames="fade"
+            exit={false}
+        >
+            <div
+                className={
+                    "grid-element " + typeToClassName.get(state.type) || ""
+                }
+                onMouseDown={(e) => prevDef(e, onMouseDown)}
+                onMouseUp={(e) => prevDef(e, onMouseUp)}
+                onMouseEnter={(e) => prevDef(e, onMouseEnter)}
+            ></div>
+        </CSSTransition>
     );
 };
 

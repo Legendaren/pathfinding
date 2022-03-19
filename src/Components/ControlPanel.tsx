@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ShortestPathFinder } from "../grid";
 import AStar from "../Pathfinding/astar";
 import Dijkstras from "../Pathfinding/dijkstras";
-import Graph from "../Pathfinding/graph";
 import "./../App.css";
 
 interface ControlPanelProps {
