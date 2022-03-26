@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 import {
     GridElementFactory,
@@ -7,12 +7,14 @@ import {
 } from "../grid-element";
 import { DistanceVertex } from "../Pathfinding/dijkstras";
 import {
+    delay,
     generateGraph,
     GridPosition,
     GridSize,
     initGridStates,
     posToString,
     ShortestPathFinder,
+    stringToPos,
 } from "../grid";
 import "./../App.css";
 import ControlPanel from "./ControlPanel";
@@ -24,79 +26,101 @@ interface GridProps {
     target: GridPosition;
 }
 
-type StatePositionPair = [GridElementState, GridPosition];
-
 const Grid = ({ size, start, target }: GridProps) => {
-    const [startPos, setStartPos] = useState(start);
-    const [targetPos, setTargetPos] = useState(target);
-    const [isLeftMouseDown, setLeftMouseDown] = useState(false);
-    const [isRightMouseDown, setRightMouseDown] = useState(false);
+    const startRef = useRef(start);
+    const targetRef = useRef(target);
+    const leftMouseDownRef = useRef<boolean>(false);
+    const rightMouseDownRef = useRef<boolean>(false);
+    const draggedElementRef = useRef<GridElementState | undefined>(undefined);
+    const pathVerticesRef = useRef<DistanceVertex[]>([]);
+    const [isVisitedComplete, setVisitedComplete] = useState<boolean>(false);
     const [gridStates, setGridStates] = useState(
-        initGridStates(size, startPos, targetPos)
+        initGridStates(size, startRef.current, targetRef.current)
     );
-    const [draggedElement, setDraggedElement] = useState<
-        GridElementState | undefined
-    >(undefined);
 
-    const leftMouseDownRef = useRef<boolean>();
-    const rightMouseDownRef = useRef<boolean>();
-    const draggedElementRef = useRef<GridElementState | undefined>();
-    const startPosRef = useRef<GridPosition>();
-    const targetPosRef = useRef<GridPosition>();
-    leftMouseDownRef.current = isLeftMouseDown;
-    rightMouseDownRef.current = isRightMouseDown;
-    draggedElementRef.current = draggedElement;
-    startPosRef.current = startPos;
-    targetPosRef.current = targetPos;
+    const setElement = useCallback(
+        (pos: GridPosition, state: GridElementState) => {
+            setGridStates((prevGrid) => {
+                const gridCopy = [...prevGrid];
+                gridCopy[pos.y][pos.x] = state;
+                return gridCopy;
+            });
+        },
+        []
+    );
 
-    const updateGridStates = useCallback((newStates: StatePositionPair[]) => {
-        setGridStates((oldGridStates) => {
-            const gridStatesCopy = [...oldGridStates];
-            for (const newState of newStates) {
-                const [elementState, { x, y }] = newState;
-                gridStatesCopy[y][x] = elementState;
-            }
-            return gridStatesCopy;
-        });
+    const clearGrid = useCallback((...types: GridElementType[]) => {
+        setGridStates((oldGridStates) =>
+            oldGridStates.map((row) =>
+                row.map((state) =>
+                    types.includes(state.type)
+                        ? GridElementFactory.createDefault(state.position)
+                        : state
+                )
+            )
+        );
     }, []);
 
-    const updateGridState = useCallback(
-        (position: GridPosition, newState: GridElementState) => {
-            updateGridStates([[newState, position]]);
+    const setPathVertices = useCallback(async () => {
+        console.log("setPathVertices:", pathVerticesRef.current);
+        for (const vertex of pathVerticesRef.current) {
+            const pathGridElement = GridElementFactory.createPath(
+                vertex.position
+            );
+            setElement(vertex.position, pathGridElement);
+            await delay(30);
+        }
+    }, [setElement]);
+
+    const setVisitedVertices = useCallback(
+        async (vertices: string[]) => {
+            for (const v of vertices) {
+                const pos = stringToPos(v);
+                const visitedGridElement =
+                    GridElementFactory.createVisited(pos);
+                setElement(pos, visitedGridElement);
+                await delay(15);
+            }
+            setVisitedComplete(true);
         },
-        [updateGridStates]
+        [setElement]
+    );
+
+    useEffect(() => {
+        console.log("useEffect", isVisitedComplete);
+        if (isVisitedComplete) {
+            setPathVertices();
+        } else {
+            clearGrid(GridElementType.PATH, GridElementType.VISITED);
+        }
+    }, [isVisitedComplete, setPathVertices, clearGrid]);
+
+    const clearElement = useCallback(
+        (pos: GridPosition) => {
+            setElement(pos, GridElementFactory.createDefault(pos));
+        },
+        [setElement]
     );
 
     const handleDrag = useCallback(
         (state: GridElementState) => {
-            const isStart = state.type === GridElementType.START;
-            const isTarget = state.type === GridElementType.TARGET;
-            const isWall = state.type === GridElementType.WALL;
-            const isValidPos = !isStart && !isTarget && !isWall;
-            if (!draggedElementRef.current || !isValidPos) return false;
-
-            updateGridState(
-                draggedElementRef.current.position,
-                GridElementFactory.createDefault(
-                    draggedElementRef.current.position
-                )
-            );
             const newDraggedElement: GridElementState = {
-                ...draggedElementRef.current,
+                ...draggedElementRef.current!,
                 position: state.position,
             };
 
             if (newDraggedElement.type === GridElementType.START) {
-                setStartPos(state.position);
+                startRef.current = state.position;
             } else if (newDraggedElement.type === GridElementType.TARGET) {
-                setTargetPos(state.position);
+                targetRef.current = state.position;
             }
 
-            updateGridState(state.position, newDraggedElement);
-            setDraggedElement(newDraggedElement);
+            clearElement(draggedElementRef.current!.position);
+            setElement(state.position, newDraggedElement);
+            draggedElementRef.current = newDraggedElement;
             return true;
         },
-        [updateGridState]
+        [setElement, clearElement]
     );
 
     const onMouseDownLeft = useCallback(
@@ -104,29 +128,23 @@ const Grid = ({ size, start, target }: GridProps) => {
             const isStart = state.type === GridElementType.START;
             const isTarget = state.type === GridElementType.TARGET;
             if (isStart || isTarget) {
-                setDraggedElement(state);
+                draggedElementRef.current = state;
             } else {
-                updateGridState(
-                    state.position,
-                    GridElementFactory.createWall(state.position)
-                );
+                const wallElem = GridElementFactory.createWall(state.position);
+                setElement(state.position, wallElem);
             }
-            setLeftMouseDown(true);
+            leftMouseDownRef.current = true;
         },
-        [updateGridState]
+        [setElement]
     );
 
     const onMouseDownRight = useCallback(
         (state: GridElementState) => {
             const isWall = state.type === GridElementType.WALL;
-            if (isWall)
-                updateGridState(
-                    state.position,
-                    GridElementFactory.createDefault(state.position)
-                );
-            setRightMouseDown(true);
+            if (isWall) clearElement(state.position);
+            rightMouseDownRef.current = true;
         },
-        [updateGridState]
+        [clearElement]
     );
 
     const onMouseDownHandler: Handler = useCallback(
@@ -146,40 +164,37 @@ const Grid = ({ size, start, target }: GridProps) => {
         const isLeft = e.button === 0;
         const isRight = e.button === 2;
         if (isLeft) {
-            setLeftMouseDown(false);
-            setDraggedElement(undefined);
+            leftMouseDownRef.current = false;
+            draggedElementRef.current = undefined;
         } else if (isRight) {
-            setRightMouseDown(false);
+            rightMouseDownRef.current = false;
         }
     }, []);
 
     const onMouseEnterLeft = useCallback(
         (state: GridElementState) => {
-            if (handleDrag(state)) return;
             const isStart = state.type === GridElementType.START;
             const isTarget = state.type === GridElementType.TARGET;
             const isWall = state.type === GridElementType.WALL;
-            const isValidPos =
-                leftMouseDownRef.current && !isWall && !isStart && !isTarget;
-            if (isValidPos)
-                updateGridState(
-                    state.position,
-                    GridElementFactory.createWall(state.position)
-                );
+            const isValidPos = !isWall && !isStart && !isTarget;
+            if (draggedElementRef.current && isValidPos) {
+                handleDrag(state);
+            } else if (leftMouseDownRef.current && isValidPos) {
+                const wallElem = GridElementFactory.createWall(state.position);
+                setElement(state.position, wallElem);
+            }
         },
-        [updateGridState, handleDrag]
+        [setElement, handleDrag]
     );
 
     const onMouseEnterRight = useCallback(
         (state: GridElementState) => {
             const isWall = state.type === GridElementType.WALL;
-            if (rightMouseDownRef.current && isWall)
-                updateGridState(
-                    state.position,
-                    GridElementFactory.createDefault(state.position)
-                );
+            if (rightMouseDownRef.current && isWall) {
+                clearElement(state.position);
+            }
         },
-        [updateGridState]
+        [clearElement]
     );
 
     const onMouseEnterHandler: Handler = useCallback(
@@ -190,64 +205,29 @@ const Grid = ({ size, start, target }: GridProps) => {
         [onMouseEnterLeft, onMouseEnterRight]
     );
 
-    const setPathVertices = useCallback(
-        (path: DistanceVertex[]) => {
-            const newStates: StatePositionPair[] = [];
-            path.forEach((vertex, i) => {
-                const pathGridElement = GridElementFactory.createPath(
-                    vertex.position
-                );
-                const pathVertex = GridElementFactory.createWithAnimationDelay(
-                    pathGridElement,
-                    pathGridElement.animationDelay +
-                        pathGridElement.animationDelay * (path.length - i + 1)
-                );
-                newStates.push([pathVertex, vertex.position]);
-            });
-            updateGridStates(newStates);
-        },
-        [updateGridStates]
-    );
-
-    const clearGrid = useCallback((type: GridElementType) => {
-        setGridStates((oldGridStates) =>
-            oldGridStates.map((row) =>
-                row.map((state) =>
-                    state.type === type
-                        ? GridElementFactory.createDefault(state.position)
-                        : state
-                )
-            )
-        );
-    }, []);
-
     const calculatePath = useCallback(
         (pathfinder: ShortestPathFinder) => {
-            setGridStates((oldGridStates) => {
-                const path = pathfinder.calculateShortestPath(
-                    posToString(startPosRef.current!),
-                    posToString(targetPosRef.current!),
-                    generateGraph(oldGridStates, size)
-                );
-                console.log("Found path: ", path);
-                const pathWithoutFirstandLastVertex = path.slice(
-                    1,
-                    path.length - 1
-                );
-                setPathVertices(pathWithoutFirstandLastVertex);
-                return oldGridStates;
-            });
+            const [visited, path] = pathfinder.calculateShortestPath(
+                posToString(startRef.current),
+                posToString(targetRef.current),
+                generateGraph(gridStates, size)
+            );
+            console.log("Found path: ", path);
+            const pathWithoutFirstandLastVertex = path.slice(1, -1);
+            const visitedWithoutFirstAndLast = visited.slice(1, -1);
+            pathVerticesRef.current = pathWithoutFirstandLastVertex.reverse();
+            setVisitedVertices(visitedWithoutFirstAndLast);
         },
-        [setPathVertices, size]
+        [setVisitedVertices, size, gridStates]
     );
 
     return (
         <div className="grid" onContextMenu={(e) => e.preventDefault()}>
             {gridStates.map((row, i) => (
-                <div key={i} className={"grid-row"}>
+                <div key={"row:" + i} className={"grid-row"}>
                     {row.map((elem, j) => (
                         <GridElement
-                            key={j}
+                            key={"row:" + i + ",col:" + j}
                             state={elem}
                             onMouseDown={onMouseDownHandler}
                             onMouseUp={onMouseUpHandler}
@@ -259,7 +239,9 @@ const Grid = ({ size, start, target }: GridProps) => {
             <ControlPanel
                 calculatePath={calculatePath}
                 clearWalls={() => clearGrid(GridElementType.WALL)}
-                clearPath={() => clearGrid(GridElementType.PATH)}
+                clearPath={() => {
+                    setVisitedComplete(false);
+                }}
             />
         </div>
     );

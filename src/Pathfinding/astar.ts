@@ -40,7 +40,11 @@ class AStar implements ShortestPathFinder {
         return Math.abs(x1 - x0) + Math.abs(y1 - y0);
     }
 
-    calculateShortestPath(start: string, target: string, graph: Graph) {
+    calculateShortestPath(
+        start: string,
+        target: string,
+        graph: Graph
+    ): [string[], DistanceVertex[]] {
         this.graph = graph;
         this.graph.getVertices().forEach((vertexName) => {
             this.distance.set(vertexName, {
@@ -75,10 +79,11 @@ class AStar implements ShortestPathFinder {
             this.visited.add(vertex.name);
 
             if (vertex.name === target) {
-                console.log(this.visited);
                 console.log("iterations astar: ", iterations);
-                console.log(this.heuristic);
-                return this.pathToTarget(vertex.name);
+                return [
+                    Array.from(this.visited),
+                    this.pathToTarget(vertex.name),
+                ];
             }
 
             for (const edge of this.graph.getEdges(vertex.name)) {
@@ -109,7 +114,7 @@ class AStar implements ShortestPathFinder {
             }
         }
         console.log("No path found");
-        return [];
+        return [[], []];
     }
 }
 

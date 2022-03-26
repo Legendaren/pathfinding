@@ -16,12 +16,15 @@ export interface GridSize {
     columns: number;
 }
 
+type Visited = string[];
+type ShortestPath = DistanceVertex[];
+
 export interface ShortestPathFinder {
     calculateShortestPath: (
         start: string,
         target: string,
         graph: Graph
-    ) => DistanceVertex[];
+    ) => [Visited, ShortestPath];
 }
 
 export const inBounds = (pos: GridPosition, gridSize: GridSize) => {
@@ -38,8 +41,17 @@ export const adjacentVertexPositions = (pos: GridPosition): GridPosition[] => {
     return [right, down, up, left];
 };
 
-export const posToString = (pos: GridPosition) => {
+export const posToString = (pos: GridPosition): string => {
     return `${pos.x},${pos.y}`;
+};
+
+export const stringToPos = (s: string): GridPosition => {
+    const [x, y] = s.split(",");
+    return { x: parseInt(x), y: parseInt(y) };
+};
+
+export const delay = (timeInMs: number) => {
+    return new Promise((resolve) => setTimeout(resolve, timeInMs));
 };
 
 export const initGridStates = (

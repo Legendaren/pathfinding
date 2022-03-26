@@ -6,33 +6,22 @@ export enum GridElementType {
     TARGET,
     WALL,
     PATH,
+    VISITED,
 }
 
 export interface GridElementState {
     position: GridPosition;
     type: GridElementType;
-    animationDelay: number;
 }
 
 export class GridElementFactory {
     private static createGridElement(
         position: GridPosition,
         type: GridElementType
-    ) {
+    ): GridElementState {
         return {
             position: position,
             type: type,
-            animationDelay: 50,
-        };
-    }
-
-    static createWithAnimationDelay(
-        state: GridElementState,
-        animDelay: number
-    ): GridElementState {
-        return {
-            ...state,
-            animationDelay: animDelay,
         };
     }
 
@@ -54,5 +43,9 @@ export class GridElementFactory {
 
     static createPath(position: GridPosition): GridElementState {
         return this.createGridElement(position, GridElementType.PATH);
+    }
+
+    static createVisited(position: GridPosition): GridElementState {
+        return this.createGridElement(position, GridElementType.VISITED);
     }
 }

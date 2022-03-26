@@ -10,28 +10,34 @@ interface ControlPanelProps {
     clearPath: () => void;
 }
 
+type AlgorithmName = "Dijkstra's" | "A*";
+
 const ControlPanel = ({
     calculatePath,
     clearWalls,
     clearPath,
 }: ControlPanelProps) => {
     const [pathfindingFuncName, setPathfindingFuncName] =
-        useState("Dijkstra's");
+        useState<AlgorithmName>("A*");
 
-    const nameToFunc = new Map<string, ShortestPathFinder>([
-        ["Dijkstra's", new Dijkstras()],
+    const nameToFunc = new Map<AlgorithmName, ShortestPathFinder>([
         ["A*", new AStar()],
+        ["Dijkstra's", new Dijkstras()],
     ]);
 
     const calculateOnClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
         const pathfindingFunc = nameToFunc.get(pathfindingFuncName);
         if (pathfindingFunc) calculatePath(pathfindingFunc);
-        else console.log("Pathfinding function not found");
+        else throw Error("Pathfinding function not found");
     };
 
     return (
         <div className="control-panel">
-            <select onChange={(e) => setPathfindingFuncName(e.target.value)}>
+            <select
+                onChange={(e) => {
+                    setPathfindingFuncName(e.target.value as AlgorithmName);
+                }}
+            >
                 {Array.from(nameToFunc.keys()).map((name, i) => (
                     <option value={name} key={i}>
                         {name}

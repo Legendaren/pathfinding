@@ -32,29 +32,33 @@
 
 .grid-element.start {
     background-color: green;
-    border: 1px solid green;
 }
 
 .grid-element.target {
     background-color: red;
-    border: 1px solid red;
 }
 
-/* .grid-element.path {
+.grid-element.path {
     background-color: cyan;
-} */
-
-.fade-enter {
-    background-color: "initial";
+    animation: bgColor 1.5s infinite linear;
 }
 
-.fade-enter-active {
-    background-color: "initial";
-    transition: 500ms linear;
+@keyframes bgColor {
+    0% {
+        background-color: cyan;
+    }
+
+    50% {
+        background-color: blue;
+    }
+
+    100% {
+        background-color: cyan;
+    }
 }
 
-.fade-enter-done {
-    background-color: cyan;
+.grid-element.visited {
+    background-color: orange;
 }
 
 .control-panel {
