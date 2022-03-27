@@ -13,23 +13,21 @@ class AStar implements ShortestPathFinder {
     visited: Set<string>;
     graph: Graph;
     distance: Map<string, DistanceVertex>;
-    heuristic: Map<string, DistanceVertex>;
 
     constructor() {
         this.unvisited = new PriorityQueue();
         this.visited = new Set();
         this.graph = new Graph();
         this.distance = new Map();
-        this.heuristic = new Map();
     }
 
-    private pathToTarget(target: string) {
+    private pathToTarget(target: string): DistanceVertex[] {
         const path: DistanceVertex[] = [];
         let vertexIterator: DistanceVertex | undefined =
             this.distance.get(target);
         while (vertexIterator) {
             path.push(vertexIterator);
-            vertexIterator = this.distance.get(vertexIterator.previous || "");
+            vertexIterator = this.distance.get(vertexIterator.previous!);
         }
         return path;
     }
@@ -40,29 +38,27 @@ class AStar implements ShortestPathFinder {
         return Math.abs(x1 - x0) + Math.abs(y1 - y0);
     }
 
-    calculateShortestPath(
-        start: string,
-        target: string,
-        graph: Graph
-    ): [string[], DistanceVertex[]] {
-        this.graph = graph;
+    private initializeDistances() {
         this.graph.getVertices().forEach((vertexName) => {
             this.distance.set(vertexName, {
                 position: this.graph.getVertex(vertexName)!.getPosition(),
                 weight: Infinity,
             });
         });
-        const distVertex = this.distance.get(start);
-        if (!distVertex) {
-            throw new Error("Start vertex not found");
-        }
+    }
+
+    calculateShortestPath(
+        start: string,
+        target: string,
+        graph: Graph
+    ): [string[], DistanceVertex[]] {
+        this.graph = graph;
+        this.initializeDistances();
+
         const startPos = this.graph.getVertex(start)!.getPosition();
         const targetPos = this.graph.getVertex(target)!.getPosition();
+
         this.distance.set(start, { position: startPos, weight: 0 });
-        this.heuristic.set(start, {
-            position: startPos,
-            weight: this.manhattanDistance(startPos, targetPos),
-        });
         this.unvisited.push({
             name: start,
             cost: this.manhattanDistance(startPos, targetPos),
@@ -71,46 +67,42 @@ class AStar implements ShortestPathFinder {
         let iterations = 0;
         while (!this.unvisited.isEmpty()) {
             iterations++;
-            const vertex = this.unvisited.pop();
+            const fromVertex = this.unvisited.pop();
+            this.visited.add(fromVertex.name);
 
-            if (this.visited.has(vertex.name)) {
-                continue;
-            }
-            this.visited.add(vertex.name);
-
-            if (vertex.name === target) {
+            if (fromVertex.name === target) {
                 console.log("iterations astar: ", iterations);
                 return [
                     Array.from(this.visited),
-                    this.pathToTarget(vertex.name),
+                    this.pathToTarget(fromVertex.name),
                 ];
             }
 
-            for (const edge of this.graph.getEdges(vertex.name)) {
-                const toPos = this.graph.getVertex(edge.getTo())!.getPosition();
+            for (const edge of this.graph.getEdges(fromVertex.name)) {
+                const toVertex = this.graph.getVertex(edge.getTo())!;
                 const newWeight =
-                    this.distance.get(vertex.name)!.weight + edge.getWeight();
-                const oldWeight = this.distance.get(edge.getTo())!.weight;
-                const newWeightHeuristic =
-                    newWeight + this.manhattanDistance(toPos, targetPos);
+                    this.distance.get(fromVertex.name)!.weight +
+                    edge.getWeight();
+                const oldWeight = this.distance.get(toVertex.getName())!.weight;
+                const heuristic = this.manhattanDistance(
+                    toVertex.getPosition(),
+                    targetPos
+                );
 
                 if (newWeight < oldWeight) {
                     this.distance.set(edge.getTo(), {
-                        position: toPos,
+                        position: toVertex.getPosition(),
                         weight: newWeight,
-                        previous: vertex.name,
-                    });
-                    this.heuristic.set(edge.getTo(), {
-                        position: toPos,
-                        weight: newWeightHeuristic,
-                        previous: vertex.name,
+                        previous: fromVertex.name,
                     });
                 }
 
-                this.unvisited.push({
-                    name: edge.getTo(),
-                    cost: newWeightHeuristic,
-                });
+                if (!this.visited.has(toVertex.getName())) {
+                    this.unvisited.push({
+                        name: edge.getTo(),
+                        cost: newWeight + heuristic,
+                    });
+                }
             }
         }
         console.log("No path found");

@@ -38,7 +38,7 @@ export const adjacentVertexPositions = (pos: GridPosition): GridPosition[] => {
     const right: GridPosition = { x: pos.x + 1, y: pos.y };
     const up: GridPosition = { x: pos.x, y: pos.y - 1 };
     const down: GridPosition = { x: pos.x, y: pos.y + 1 };
-    return [right, down, up, left];
+    return [up, right, down, left];
 };
 
 export const posToString = (pos: GridPosition): string => {
@@ -106,5 +106,6 @@ export const generateGraph = (
             }
         }
     }
+    console.log(graph);
     return graph;
 };

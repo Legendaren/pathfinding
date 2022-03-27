@@ -12,7 +12,7 @@ class PriorityQueue {
     private _heap: PQVertex[];
     private _comparator: (a: PQVertex, b: PQVertex) => boolean;
 
-    constructor(comparator = (a: PQVertex, b: PQVertex) => a.cost <= b.cost) {
+    constructor(comparator = (a: PQVertex, b: PQVertex) => a.cost < b.cost) {
         this._heap = [];
         this._comparator = comparator;
     }
