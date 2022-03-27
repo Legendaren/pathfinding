@@ -17,8 +17,9 @@ const ControlPanel = ({
     clearWalls,
     clearPath,
 }: ControlPanelProps) => {
-    const [pathfindingFuncName, setPathfindingFuncName] =
-        useState<AlgorithmName>("A*");
+    const [pathfindingFuncName, setPathfindingFuncName] = useState<
+        AlgorithmName | undefined
+    >(undefined);
 
     const nameToFunc = new Map<AlgorithmName, ShortestPathFinder>([
         ["A*", new AStar()],
@@ -26,7 +27,7 @@ const ControlPanel = ({
     ]);
 
     const calculateOnClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
-        const pathfindingFunc = nameToFunc.get(pathfindingFuncName);
+        const pathfindingFunc = nameToFunc.get(pathfindingFuncName!);
         if (pathfindingFunc) calculatePath(pathfindingFunc);
         else throw Error("Pathfinding function not found");
     };
@@ -38,13 +39,20 @@ const ControlPanel = ({
                     setPathfindingFuncName(e.target.value as AlgorithmName);
                 }}
             >
+                <option disabled={pathfindingFuncName !== undefined}>
+                    -- Select algorithm --
+                </option>
                 {Array.from(nameToFunc.keys()).map((name, i) => (
                     <option value={name} key={i}>
                         {name}
                     </option>
                 ))}
             </select>
-            <button onClick={calculateOnClick} className="button">
+            <button
+                onClick={calculateOnClick}
+                disabled={pathfindingFuncName === undefined}
+                className="button"
+            >
                 Calculate Path
             </button>
             <button onClick={clearWalls} className="button">

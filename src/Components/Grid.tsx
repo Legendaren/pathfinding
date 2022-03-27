@@ -222,20 +222,7 @@ const Grid = ({ size, start, target }: GridProps) => {
     );
 
     return (
-        <div className="grid" onContextMenu={(e) => e.preventDefault()}>
-            {gridStates.map((row, i) => (
-                <div key={"row:" + i} className={"grid-row"}>
-                    {row.map((elem, j) => (
-                        <GridElement
-                            key={"row:" + i + ",col:" + j}
-                            state={elem}
-                            onMouseDown={onMouseDownHandler}
-                            onMouseUp={onMouseUpHandler}
-                            onMouseEnter={onMouseEnterHandler}
-                        />
-                    ))}
-                </div>
-            ))}
+        <>
             <ControlPanel
                 calculatePath={calculatePath}
                 clearWalls={() => clearGrid(GridElementType.WALL)}
@@ -243,7 +230,22 @@ const Grid = ({ size, start, target }: GridProps) => {
                     setVisitedComplete(false);
                 }}
             />
-        </div>
+            <div className="grid" onContextMenu={(e) => e.preventDefault()}>
+                {gridStates.map((row, i) => (
+                    <div key={"row:" + i} className={"grid-row"}>
+                        {row.map((elem, j) => (
+                            <GridElement
+                                key={"row:" + i + ",col:" + j}
+                                state={elem}
+                                onMouseDown={onMouseDownHandler}
+                                onMouseUp={onMouseUpHandler}
+                                onMouseEnter={onMouseEnterHandler}
+                            />
+                        ))}
+                    </div>
+                ))}
+            </div>
+        </>
     );
 };
 
