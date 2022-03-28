@@ -63,7 +63,6 @@ class Dijkstras implements ShortestPathFinder {
             this.visited.add(vertex.name);
 
             if (vertex.name === target) {
-                //console.log(this.visited);
                 console.log("iterations dijkstra: ", iterations);
                 return [
                     Array.from(this.visited),

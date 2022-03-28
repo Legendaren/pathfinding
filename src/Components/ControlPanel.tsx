@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ShortestPathFinder } from "../grid";
 import AStar from "../Pathfinding/astar";
+import BestFirstSearch from "../Pathfinding/best-first-search";
 import Dijkstras from "../Pathfinding/dijkstras";
 import "./../App.css";
 
@@ -10,7 +11,7 @@ interface ControlPanelProps {
     clearPath: () => void;
 }
 
-type AlgorithmName = "Dijkstra's" | "A*";
+type AlgorithmName = "Dijkstra's" | "A*" | "Best-First Search";
 
 const ControlPanel = ({
     calculatePath,
@@ -24,6 +25,7 @@ const ControlPanel = ({
     const nameToFunc = new Map<AlgorithmName, ShortestPathFinder>([
         ["A*", new AStar()],
         ["Dijkstra's", new Dijkstras()],
+        ["Best-First Search", new BestFirstSearch()],
     ]);
 
     const calculateOnClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
