@@ -3,7 +3,6 @@ import {
     GridElementState,
     GridElementType,
 } from "./grid-element";
-import { DistanceVertex } from "./Pathfinding/astar";
 import Graph, { Edge, Vertex } from "./Pathfinding/graph";
 
 export interface GridPosition {
@@ -17,7 +16,7 @@ export interface GridSize {
 }
 
 type Visited = string[];
-type ShortestPath = DistanceVertex[];
+type ShortestPath = GridPosition[];
 
 export interface ShortestPathFinder {
     calculateShortestPath: (

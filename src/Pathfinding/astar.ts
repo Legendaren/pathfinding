@@ -1,57 +1,15 @@
 import Graph from "./graph";
 import { GridPosition, ShortestPathFinder } from "../grid";
-import PriorityQueue from "./priority-queue/priority-queue";
+import Heuristics from "./heuristics";
+import PathConstructor from "./path-constructor";
+import Pathfinder from "./pathfinder";
 
-export interface DistanceVertex {
-    position: GridPosition;
-    weight: number;
-    previous?: string;
-}
-
-class AStar implements ShortestPathFinder {
-    unvisited: PriorityQueue;
-    visited: Set<string>;
-    graph: Graph;
-    distance: Map<string, DistanceVertex>;
-
-    constructor() {
-        this.unvisited = new PriorityQueue();
-        this.visited = new Set();
-        this.graph = new Graph();
-        this.distance = new Map();
-    }
-
-    private pathToTarget(target: string): DistanceVertex[] {
-        const path: DistanceVertex[] = [];
-        let vertexIterator: DistanceVertex | undefined =
-            this.distance.get(target);
-        while (vertexIterator) {
-            path.push(vertexIterator);
-            vertexIterator = this.distance.get(vertexIterator.previous!);
-        }
-        return path;
-    }
-
-    private manhattanDistance(from: GridPosition, to: GridPosition) {
-        const { x: x0, y: y0 } = from;
-        const { x: x1, y: y1 } = to;
-        return Math.abs(x1 - x0) + Math.abs(y1 - y0);
-    }
-
-    private initializeDistances() {
-        this.graph.getVertices().forEach((vertexName) => {
-            this.distance.set(vertexName, {
-                position: this.graph.getVertex(vertexName)!.getPosition(),
-                weight: Infinity,
-            });
-        });
-    }
-
+class AStar extends Pathfinder implements ShortestPathFinder {
     calculateShortestPath(
         start: string,
         target: string,
         graph: Graph
-    ): [string[], DistanceVertex[]] {
+    ): [string[], GridPosition[]] {
         this.graph = graph;
         this.initializeDistances();
 
@@ -61,7 +19,7 @@ class AStar implements ShortestPathFinder {
         this.distance.set(start, { position: startPos, weight: 0 });
         this.unvisited.push({
             name: start,
-            cost: this.manhattanDistance(startPos, targetPos),
+            cost: new Heuristics().manhattanDistance(startPos, targetPos),
         });
 
         let iterations = 0;
@@ -72,41 +30,44 @@ class AStar implements ShortestPathFinder {
 
             if (fromVertex.name === target) {
                 console.log("iterations astar: ", iterations);
-                return [
-                    Array.from(this.visited),
-                    this.pathToTarget(fromVertex.name),
-                ];
-            }
-
-            for (const edge of this.graph.getEdges(fromVertex.name)) {
-                const toVertex = this.graph.getVertex(edge.getTo())!;
-                const newWeight =
-                    this.distance.get(fromVertex.name)!.weight +
-                    edge.getWeight();
-                const oldWeight = this.distance.get(toVertex.getName())!.weight;
-                const heuristic = this.manhattanDistance(
-                    toVertex.getPosition(),
-                    targetPos
+                return new PathConstructor().generateResult(
+                    this.visited,
+                    this.distance.get(fromVertex.name)!
                 );
-
-                if (newWeight < oldWeight) {
-                    this.distance.set(edge.getTo(), {
-                        position: toVertex.getPosition(),
-                        weight: newWeight,
-                        previous: fromVertex.name,
-                    });
-                }
-
-                if (!this.visited.has(toVertex.getName())) {
-                    this.unvisited.push({
-                        name: edge.getTo(),
-                        cost: newWeight + heuristic,
-                    });
-                }
             }
+
+            this.checkNeighbors(fromVertex.name, targetPos);
         }
         console.log("No path found");
         return [[], []];
+    }
+
+    checkNeighbors(fromVertex: string, target: GridPosition) {
+        for (const edge of this.graph.getEdges(fromVertex)) {
+            const toVertex = this.graph.getVertex(edge.getTo())!;
+            const newWeight =
+                this.distance.get(fromVertex)!.weight + edge.getWeight();
+            const oldWeight = this.distance.get(toVertex.getName())!.weight;
+
+            if (newWeight < oldWeight) {
+                this.distance.set(edge.getTo(), {
+                    position: toVertex.getPosition(),
+                    weight: newWeight,
+                    previous: this.distance.get(fromVertex),
+                });
+            }
+
+            if (!this.visited.has(toVertex.getName())) {
+                const heuristic = new Heuristics().manhattanDistance(
+                    toVertex.getPosition(),
+                    target
+                );
+                this.unvisited.push({
+                    name: edge.getTo(),
+                    cost: newWeight + heuristic,
+                });
+            }
+        }
     }
 }
 

@@ -1,55 +1,19 @@
 import Graph from "./graph";
 import { GridPosition, ShortestPathFinder } from "../grid";
-import PriorityQueue from "./priority-queue/priority-queue";
+import PathConstructor from "./path-constructor";
+import Pathfinder from "./pathfinder";
 
-export interface DistanceVertex {
-    position: GridPosition;
-    weight: number;
-    previous?: string;
-}
-
-class Dijkstras implements ShortestPathFinder {
-    unvisited: PriorityQueue;
-    visited: Set<string>;
-    graph: Graph;
-    distance: Map<string, DistanceVertex>;
-
-    constructor() {
-        this.unvisited = new PriorityQueue();
-        this.visited = new Set();
-        this.graph = new Graph();
-        this.distance = new Map();
-    }
-
-    private pathToTarget(target: string) {
-        const path: DistanceVertex[] = [];
-        let vertexIterator: DistanceVertex | undefined =
-            this.distance.get(target);
-        while (vertexIterator) {
-            path.push(vertexIterator);
-            vertexIterator = this.distance.get(vertexIterator.previous || "");
-        }
-        return path;
-    }
-
+class Dijkstras extends Pathfinder implements ShortestPathFinder {
     calculateShortestPath(
         start: string,
         target: string,
         graph: Graph
-    ): [string[], DistanceVertex[]] {
+    ): [string[], GridPosition[]] {
         this.graph = graph;
-        this.graph.getVertices().forEach((vertexName) => {
-            this.distance.set(vertexName, {
-                position: this.graph.getVertex(vertexName)!.getPosition(),
-                weight: Infinity,
-            });
-        });
-        const distVertex = this.distance.get(start);
-        if (!distVertex) {
-            throw new Error("Start vertex not found");
-        }
-        const pos = this.graph.getVertex(start)!.getPosition();
-        this.distance.set(start, { position: pos, weight: 0 });
+        this.initializeDistances();
+
+        const startPos = this.graph.getVertex(start)!.getPosition();
+        this.distance.set(start, { position: startPos, weight: 0 });
         this.unvisited.push({ name: start, cost: 0 });
 
         let iterations = 0;
@@ -64,35 +28,37 @@ class Dijkstras implements ShortestPathFinder {
 
             if (vertex.name === target) {
                 console.log("iterations dijkstra: ", iterations);
-                return [
-                    Array.from(this.visited),
-                    this.pathToTarget(vertex.name),
-                ];
+                return new PathConstructor().generateResult(
+                    this.visited,
+                    this.distance.get(vertex.name)!
+                );
             }
 
-            for (const edge of this.graph.getEdges(vertex.name)) {
-                const newWeight =
-                    this.distance.get(vertex.name)!.weight + edge.getWeight();
-                const oldWeight = this.distance.get(edge.getTo())!.weight;
-
-                if (newWeight < oldWeight) {
-                    this.distance.set(edge.getTo(), {
-                        position: this.graph
-                            .getVertex(edge.getTo())!
-                            .getPosition(),
-                        weight: newWeight,
-                        previous: vertex.name,
-                    });
-                }
-
-                this.unvisited.push({
-                    name: edge.getTo(),
-                    cost: newWeight,
-                });
-            }
+            this.checkNeighbors(vertex.name);
         }
         console.log("No path found");
         return [[], []];
+    }
+
+    checkNeighbors(fromVertex: string) {
+        for (const edge of this.graph.getEdges(fromVertex)) {
+            const newWeight =
+                this.distance.get(fromVertex)!.weight + edge.getWeight();
+            const oldWeight = this.distance.get(edge.getTo())!.weight;
+
+            if (newWeight < oldWeight) {
+                this.distance.set(edge.getTo(), {
+                    position: this.graph.getVertex(edge.getTo())!.getPosition(),
+                    weight: newWeight,
+                    previous: this.distance.get(fromVertex),
+                });
+            }
+
+            this.unvisited.push({
+                name: edge.getTo(),
+                cost: newWeight,
+            });
+        }
     }
 }
 

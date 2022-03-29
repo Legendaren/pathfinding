@@ -5,7 +5,6 @@ import {
     GridElementState,
     GridElementType,
 } from "../grid-element";
-import { DistanceVertex } from "../Pathfinding/dijkstras";
 import {
     delay,
     generateGraph,
@@ -32,7 +31,7 @@ const Grid = ({ size, start, target }: GridProps) => {
     const leftMouseDownRef = useRef<boolean>(false);
     const rightMouseDownRef = useRef<boolean>(false);
     const draggedElementRef = useRef<GridElementState | undefined>(undefined);
-    const pathVerticesRef = useRef<DistanceVertex[]>([]);
+    const pathVerticesRef = useRef<GridPosition[]>([]);
     const [isVisitedComplete, setVisitedComplete] = useState<boolean>(false);
     const [gridStates, setGridStates] = useState(
         initGridStates(size, startRef.current, targetRef.current)
@@ -63,11 +62,9 @@ const Grid = ({ size, start, target }: GridProps) => {
 
     const setPathVertices = useCallback(async () => {
         console.log("setPathVertices:", pathVerticesRef.current);
-        for (const vertex of pathVerticesRef.current) {
-            const pathGridElement = GridElementFactory.createPath(
-                vertex.position
-            );
-            setElement(vertex.position, pathGridElement);
+        for (const pos of pathVerticesRef.current) {
+            const pathGridElement = GridElementFactory.createPath(pos);
+            setElement(pos, pathGridElement);
             await delay(30);
         }
     }, [setElement]);

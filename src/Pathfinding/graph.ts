@@ -1,5 +1,11 @@
 import { GridPosition } from "../grid";
 
+export interface DistanceVertex {
+    position: GridPosition;
+    weight: number;
+    previous?: DistanceVertex;
+}
+
 export class Edge {
     private from: string;
     private to: string;
