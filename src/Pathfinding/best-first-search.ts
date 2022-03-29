@@ -49,8 +49,8 @@ class BestFirstSearch extends Pathfinder implements ShortestPathFinder {
                 });
             }
         }
-        console.log("No path found");
-        return [[], []];
+
+        return new PathConstructor().generateEmptyResult(this.visited);
     }
 }
 

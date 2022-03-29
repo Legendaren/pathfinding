@@ -36,8 +36,7 @@ class Dijkstras extends Pathfinder implements ShortestPathFinder {
 
             this.checkNeighbors(vertex.name);
         }
-        console.log("No path found");
-        return [[], []];
+        return new PathConstructor().generateEmptyResult(this.visited);
     }
 
     checkNeighbors(fromVertex: string) {

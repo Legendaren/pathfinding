@@ -18,6 +18,12 @@ class PathConstructor {
     ): [string[], GridPosition[]] {
         return [Array.from(visited), this.pathToTarget(distanceVertex)];
     }
+
+    public generateEmptyResult(
+        visited: Set<string>
+    ): [string[], GridPosition[]] {
+        return [Array.from(visited), []];
+    }
 }
 
 export default PathConstructor;

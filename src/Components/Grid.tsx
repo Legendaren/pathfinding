@@ -61,7 +61,10 @@ const Grid = ({ size, start, target }: GridProps) => {
     }, []);
 
     const setPathVertices = useCallback(async () => {
-        console.log("setPathVertices:", pathVerticesRef.current);
+        if (pathVerticesRef.current.length == 0) {
+            alert("Path not found");
+            return;
+        }
         for (const pos of pathVerticesRef.current) {
             const pathGridElement = GridElementFactory.createPath(pos);
             setElement(pos, pathGridElement);
@@ -87,10 +90,8 @@ const Grid = ({ size, start, target }: GridProps) => {
         console.log("useEffect", isVisitedComplete);
         if (isVisitedComplete) {
             setPathVertices();
-        } else {
-            clearGrid(GridElementType.PATH, GridElementType.VISITED);
         }
-    }, [isVisitedComplete, setPathVertices, clearGrid]);
+    }, [isVisitedComplete, setPathVertices]);
 
     const clearElement = useCallback(
         (pos: GridPosition) => {
@@ -209,7 +210,11 @@ const Grid = ({ size, start, target }: GridProps) => {
                 posToString(targetRef.current),
                 generateGraph(gridStates, size)
             );
-            console.log("Found path: ", path);
+            if (path.length > 0) {
+                console.log("Found path: ", path);
+            } else {
+                console.log("Path not found");
+            }
             const pathWithoutFirstandLastVertex = path.slice(1, -1);
             const visitedWithoutFirstAndLast = visited.slice(1, -1);
             pathVerticesRef.current = pathWithoutFirstandLastVertex.reverse();
@@ -225,6 +230,7 @@ const Grid = ({ size, start, target }: GridProps) => {
                 clearWalls={() => clearGrid(GridElementType.WALL)}
                 clearPath={() => {
                     setVisitedComplete(false);
+                    clearGrid(GridElementType.PATH, GridElementType.VISITED);
                 }}
             />
             <div className="grid" onContextMenu={(e) => e.preventDefault()}>

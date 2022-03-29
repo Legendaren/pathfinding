@@ -26,6 +26,9 @@ class AStar extends Pathfinder implements ShortestPathFinder {
         while (!this.unvisited.isEmpty()) {
             iterations++;
             const fromVertex = this.unvisited.pop();
+            if (this.visited.has(fromVertex.name)) {
+                continue;
+            }
             this.visited.add(fromVertex.name);
 
             if (fromVertex.name === target) {
@@ -38,8 +41,8 @@ class AStar extends Pathfinder implements ShortestPathFinder {
 
             this.checkNeighbors(fromVertex.name, targetPos);
         }
-        console.log("No path found");
-        return [[], []];
+
+        return new PathConstructor().generateEmptyResult(this.visited);
     }
 
     checkNeighbors(fromVertex: string, target: GridPosition) {
@@ -57,16 +60,14 @@ class AStar extends Pathfinder implements ShortestPathFinder {
                 });
             }
 
-            if (!this.visited.has(toVertex.getName())) {
-                const heuristic = new Heuristics().manhattanDistance(
-                    toVertex.getPosition(),
-                    target
-                );
-                this.unvisited.push({
-                    name: edge.getTo(),
-                    cost: newWeight + heuristic,
-                });
-            }
+            const heuristic = new Heuristics().manhattanDistance(
+                toVertex.getPosition(),
+                target
+            );
+            this.unvisited.push({
+                name: edge.getTo(),
+                cost: newWeight + heuristic,
+            });
         }
     }
 }
