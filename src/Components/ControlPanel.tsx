@@ -9,6 +9,8 @@ interface ControlPanelProps {
     calculatePath: (pathfindingFunc: ShortestPathFinder) => void;
     clearWalls: () => void;
     clearPath: () => void;
+    isCalculatingPath: boolean;
+    isGridReset: boolean;
 }
 
 type AlgorithmName = "Dijkstra's" | "A*" | "Best-First Search";
@@ -17,6 +19,8 @@ const ControlPanel = ({
     calculatePath,
     clearWalls,
     clearPath,
+    isGridReset,
+    isCalculatingPath,
 }: ControlPanelProps) => {
     const [pathfindingFuncName, setPathfindingFuncName] = useState<
         AlgorithmName | undefined
@@ -52,15 +56,27 @@ const ControlPanel = ({
             </select>
             <button
                 onClick={calculateOnClick}
-                disabled={pathfindingFuncName === undefined}
+                disabled={
+                    pathfindingFuncName === undefined ||
+                    isCalculatingPath ||
+                    !isGridReset
+                }
                 className="button"
             >
                 Calculate Path
             </button>
-            <button onClick={clearWalls} className="button">
+            <button
+                onClick={clearWalls}
+                className="button"
+                disabled={isCalculatingPath || !isGridReset}
+            >
                 Clear Walls
             </button>
-            <button onClick={clearPath} className="button">
+            <button
+                onClick={clearPath}
+                className="button"
+                disabled={isCalculatingPath}
+            >
                 Clear Path
             </button>
         </div>

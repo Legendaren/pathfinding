@@ -26,14 +26,16 @@ interface GridProps {
 }
 
 const Grid = ({ size, start, target }: GridProps) => {
-    const startRef = useRef(start);
-    const targetRef = useRef(target);
+    const startRef = useRef<GridPosition>(start);
+    const targetRef = useRef<GridPosition>(target);
     const leftMouseDownRef = useRef<boolean>(false);
     const rightMouseDownRef = useRef<boolean>(false);
     const draggedElementRef = useRef<GridElementState | undefined>(undefined);
     const pathVerticesRef = useRef<GridPosition[]>([]);
     const [isVisitedComplete, setVisitedComplete] = useState<boolean>(false);
-    const [gridStates, setGridStates] = useState(
+    const [isGridReset, setGridReset] = useState<boolean>(true);
+    const [isCalculatingPath, setCalculatingPath] = useState<boolean>(false);
+    const [gridStates, setGridStates] = useState<GridElementState[][]>(
         initGridStates(size, startRef.current, targetRef.current)
     );
 
@@ -48,6 +50,24 @@ const Grid = ({ size, start, target }: GridProps) => {
         []
     );
 
+    const setPathVertices = useCallback(async () => {
+        if (pathVerticesRef.current.length === 0) {
+            alert("Path not found");
+        }
+        for (const pos of pathVerticesRef.current) {
+            const pathGridElement = GridElementFactory.createPath(pos);
+            setElement(pos, pathGridElement);
+            await delay(30);
+        }
+        setCalculatingPath(false);
+    }, [setElement]);
+
+    useEffect(() => {
+        if (isVisitedComplete) {
+            setPathVertices();
+        }
+    }, [isVisitedComplete, setPathVertices]);
+
     const clearGrid = useCallback((...types: GridElementType[]) => {
         setGridStates((oldGridStates) =>
             oldGridStates.map((row) =>
@@ -59,18 +79,6 @@ const Grid = ({ size, start, target }: GridProps) => {
             )
         );
     }, []);
-
-    const setPathVertices = useCallback(async () => {
-        if (pathVerticesRef.current.length === 0) {
-            alert("Path not found");
-            return;
-        }
-        for (const pos of pathVerticesRef.current) {
-            const pathGridElement = GridElementFactory.createPath(pos);
-            setElement(pos, pathGridElement);
-            await delay(30);
-        }
-    }, [setElement]);
 
     const setVisitedVertices = useCallback(
         async (vertices: string[]) => {
@@ -85,13 +93,6 @@ const Grid = ({ size, start, target }: GridProps) => {
         },
         [setElement]
     );
-
-    useEffect(() => {
-        console.log("useEffect", isVisitedComplete);
-        if (isVisitedComplete) {
-            setPathVertices();
-        }
-    }, [isVisitedComplete, setPathVertices]);
 
     const clearElement = useCallback(
         (pos: GridPosition) => {
@@ -116,7 +117,6 @@ const Grid = ({ size, start, target }: GridProps) => {
             clearElement(draggedElementRef.current!.position);
             setElement(state.position, newDraggedElement);
             draggedElementRef.current = newDraggedElement;
-            return true;
         },
         [setElement, clearElement]
     );
@@ -175,9 +175,11 @@ const Grid = ({ size, start, target }: GridProps) => {
             const isTarget = state.type === GridElementType.TARGET;
             const isWall = state.type === GridElementType.WALL;
             const isValidPos = !isWall && !isStart && !isTarget;
-            if (draggedElementRef.current && isValidPos) {
+            if (!isValidPos) return;
+
+            if (draggedElementRef.current) {
                 handleDrag(state);
-            } else if (leftMouseDownRef.current && isValidPos) {
+            } else if (leftMouseDownRef.current) {
                 const wallElem = GridElementFactory.createWall(state.position);
                 setElement(state.position, wallElem);
             }
@@ -205,6 +207,8 @@ const Grid = ({ size, start, target }: GridProps) => {
 
     const calculatePath = useCallback(
         (pathfinder: ShortestPathFinder) => {
+            setCalculatingPath(true);
+            setGridReset(false);
             const [visited, path] = pathfinder.calculateShortestPath(
                 posToString(startRef.current),
                 posToString(targetRef.current),
@@ -231,7 +235,10 @@ const Grid = ({ size, start, target }: GridProps) => {
                 clearPath={() => {
                     setVisitedComplete(false);
                     clearGrid(GridElementType.PATH, GridElementType.VISITED);
+                    setGridReset(true);
                 }}
+                isCalculatingPath={isCalculatingPath}
+                isGridReset={isGridReset}
             />
             <div className="grid" onContextMenu={(e) => e.preventDefault()}>
                 {gridStates.map((row, i) => (
