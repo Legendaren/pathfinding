@@ -61,7 +61,7 @@ const Grid = ({ size, start, target }: GridProps) => {
     }, []);
 
     const setPathVertices = useCallback(async () => {
-        if (pathVerticesRef.current.length == 0) {
+        if (pathVerticesRef.current.length === 0) {
             alert("Path not found");
             return;
         }

@@ -19,6 +19,9 @@ body {
 }
 
 header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: "Righteous-Regular", Arial, sans-serif;
     margin-bottom: 1em;
     padding: 0.5em;
@@ -36,6 +39,10 @@ header h1 {
     );
     background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+.logo {
+    width: 100px;
 }
 
 .grid {
