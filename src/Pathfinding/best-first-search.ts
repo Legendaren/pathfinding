@@ -1,6 +1,7 @@
 import Graph from "./graph";
 import { GridPosition, ShortestPathFinder } from "../grid";
 import PathfinderHeuristics from "./pathfinder-heuristics";
+import Heuristics from "./heuristics";
 
 class BestFirstSearch
     extends PathfinderHeuristics
@@ -43,7 +44,7 @@ class BestFirstSearch
                 }
                 this.unvisited.push({
                     name: edge.getTo(),
-                    cost: this.heuristics.manhattanDistance(
+                    cost: Heuristics.manhattanDistance(
                         toVertex!.getPosition(),
                         targetPos
                     ),

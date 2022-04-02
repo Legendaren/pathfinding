@@ -18,7 +18,7 @@ class AStar extends PathfinderHeuristics implements ShortestPathFinder {
         this.distance.set(start, { position: startPos, weight: 0 });
         this.unvisited.push({
             name: start,
-            cost: new Heuristics().manhattanDistance(startPos, targetPos),
+            cost: Heuristics.manhattanDistance(startPos, targetPos),
         });
 
         let iterations = 0;
@@ -59,7 +59,7 @@ class AStar extends PathfinderHeuristics implements ShortestPathFinder {
                 });
             }
 
-            const heuristic = this.heuristics.manhattanDistance(
+            const heuristic = Heuristics.manhattanDistance(
                 toVertex.getPosition(),
                 target
             );
