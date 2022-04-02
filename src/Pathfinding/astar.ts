@@ -1,10 +1,9 @@
 import Graph from "./graph";
 import { GridPosition, ShortestPathFinder } from "../grid";
 import Heuristics from "./heuristics";
-import PathConstructor from "./path-constructor";
-import Pathfinder from "./pathfinder";
+import PathfinderHeuristics from "./pathfinder-heuristics";
 
-class AStar extends Pathfinder implements ShortestPathFinder {
+class AStar extends PathfinderHeuristics implements ShortestPathFinder {
     calculateShortestPath(
         start: string,
         target: string,
@@ -33,7 +32,7 @@ class AStar extends Pathfinder implements ShortestPathFinder {
 
             if (fromVertex.name === target) {
                 console.log("iterations astar: ", iterations);
-                return new PathConstructor().generateResult(
+                return this.pathConstructor.generateResult(
                     this.visited,
                     this.distance.get(fromVertex.name)!
                 );
@@ -42,7 +41,7 @@ class AStar extends Pathfinder implements ShortestPathFinder {
             this.checkNeighbors(fromVertex.name, targetPos);
         }
 
-        return new PathConstructor().generateEmptyResult(this.visited);
+        return this.pathConstructor.generateEmptyResult(this.visited);
     }
 
     checkNeighbors(fromVertex: string, target: GridPosition) {
@@ -60,7 +59,7 @@ class AStar extends Pathfinder implements ShortestPathFinder {
                 });
             }
 
-            const heuristic = new Heuristics().manhattanDistance(
+            const heuristic = this.heuristics.manhattanDistance(
                 toVertex.getPosition(),
                 target
             );

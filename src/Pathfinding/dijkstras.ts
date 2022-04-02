@@ -1,6 +1,5 @@
 import Graph from "./graph";
 import { GridPosition, ShortestPathFinder } from "../grid";
-import PathConstructor from "./path-constructor";
 import Pathfinder from "./pathfinder";
 
 class Dijkstras extends Pathfinder implements ShortestPathFinder {
@@ -28,7 +27,7 @@ class Dijkstras extends Pathfinder implements ShortestPathFinder {
 
             if (vertex.name === target) {
                 console.log("iterations dijkstra: ", iterations);
-                return new PathConstructor().generateResult(
+                return this.pathConstructor.generateResult(
                     this.visited,
                     this.distance.get(vertex.name)!
                 );
@@ -36,7 +35,7 @@ class Dijkstras extends Pathfinder implements ShortestPathFinder {
 
             this.checkNeighbors(vertex.name);
         }
-        return new PathConstructor().generateEmptyResult(this.visited);
+        return this.pathConstructor.generateEmptyResult(this.visited);
     }
 
     checkNeighbors(fromVertex: string) {
