@@ -1,9 +1,9 @@
 import Graph from "./graph";
 import { GridPosition, ShortestPathFinder } from "../grid";
 import Heuristics from "./heuristics";
-import PathfinderHeuristics from "./pathfinder-heuristics";
+import Pathfinder from "./pathfinder";
 
-class AStar extends PathfinderHeuristics implements ShortestPathFinder {
+class AStar extends Pathfinder implements ShortestPathFinder {
     calculateShortestPath(
         start: string,
         target: string,
