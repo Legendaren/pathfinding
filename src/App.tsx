@@ -2,15 +2,17 @@ import React from "react";
 import "./App.css";
 import Grid from "./Components/Grid";
 import Header from "./Components/Header";
-import { Helmet } from "react-helmet";
+import { HelmetProvider, Helmet } from "react-helmet-async";
 
 function App() {
     return (
         <div>
-            <Helmet>
-                <title>Pathfinding</title>
-                <meta name="description" content="Pathfinding Visualizer" />
-            </Helmet>
+            <HelmetProvider>
+                <Helmet>
+                    <title>Pathfinding</title>
+                    <meta name="description" content="Pathfinding Visualizer" />
+                </Helmet>
+            </HelmetProvider>
             <Header />
             <Grid
                 size={{ rows: 25, columns: 40 }}
