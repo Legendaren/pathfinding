@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ShortestPathFinder } from "../grid";
 import AStar from "../Pathfinding/astar";
 import BestFirstSearch from "../Pathfinding/best-first-search";
+import DepthFirstSearch from "../Pathfinding/depth-first-search";
 import Dijkstras from "../Pathfinding/dijkstras";
 import "./../App.css";
 
@@ -13,7 +14,11 @@ interface ControlPanelProps {
     isGridReset: boolean;
 }
 
-type AlgorithmName = "Dijkstra's" | "A*" | "Best-First Search";
+type AlgorithmName =
+    | "Dijkstra's"
+    | "A*"
+    | "Best-First Search"
+    | "Depth-First Search";
 
 const ControlPanel = ({
     calculatePath,
@@ -30,6 +35,7 @@ const ControlPanel = ({
         ["A*", new AStar()],
         ["Dijkstra's", new Dijkstras()],
         ["Best-First Search", new BestFirstSearch()],
+        ["Depth-First Search", new DepthFirstSearch()],
     ]);
 
     const calculateOnClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
