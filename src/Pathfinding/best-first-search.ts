@@ -10,7 +10,13 @@ class BestFirstSearch extends Pathfinder implements ShortestPathFinder {
         graph: Graph
     ): [string[], GridPosition[]] {
         this.graph = graph;
+        this.initializeDistances();
         const targetPos = this.graph.getVertex(target)!.getPosition();
+        this.distance.set(start, {
+            position: graph.getVertex(start)!.getPosition(),
+            weight: 0,
+            previous: undefined,
+        });
         this.unvisited.push({ name: start, cost: 0 });
 
         let iterations = 0;
@@ -32,13 +38,18 @@ class BestFirstSearch extends Pathfinder implements ShortestPathFinder {
 
             for (const edge of this.graph.getEdges(vertex.name)) {
                 const toVertex = this.graph.getVertex(edge.getTo());
-                if (!this.visited.has(toVertex!.getName())) {
+                const oldWeight = this.distance.get(edge.getTo())!.weight;
+                const newWeight =
+                    this.distance.get(vertex.name)!.weight + edge.getWeight();
+
+                if (newWeight < oldWeight) {
                     this.distance.set(edge.getTo(), {
                         position: toVertex!.getPosition(),
-                        weight: 0,
+                        weight: newWeight,
                         previous: this.distance.get(vertex.name),
                     });
                 }
+
                 this.unvisited.push({
                     name: edge.getTo(),
                     cost: Heuristics.manhattanDistance(
