@@ -49,10 +49,6 @@ export const stringToPos = (s: string): GridPosition => {
     return { x: parseInt(x), y: parseInt(y) };
 };
 
-export const delay = (timeInMs: number) => {
-    return new Promise((resolve) => setTimeout(resolve, timeInMs));
-};
-
 export const initGridStates = (
     size: GridSize,
     start: GridPosition,

@@ -10,6 +10,7 @@ interface ControlPanelProps {
     calculatePath: (pathfindingFunc: ShortestPathFinder) => void;
     clearWalls: () => void;
     clearPath: () => void;
+    cancelCalculation: () => void;
     isCalculatingPath: boolean;
     isGridReset: boolean;
 }
@@ -24,6 +25,7 @@ const ControlPanel = ({
     calculatePath,
     clearWalls,
     clearPath,
+    cancelCalculation,
     isGridReset,
     isCalculatingPath,
 }: ControlPanelProps) => {
@@ -60,17 +62,19 @@ const ControlPanel = ({
                     </option>
                 ))}
             </select>
-            <button
-                onClick={calculateOnClick}
-                disabled={
-                    pathfindingFuncName === undefined ||
-                    isCalculatingPath ||
-                    !isGridReset
-                }
-                className="button"
-            >
-                Calculate Path
-            </button>
+            {isCalculatingPath ? (
+                <button onClick={cancelCalculation} className="button">
+                    Cancel Pathfinding
+                </button>
+            ) : (
+                <button
+                    onClick={calculateOnClick}
+                    disabled={pathfindingFuncName === undefined || !isGridReset}
+                    className="button"
+                >
+                    Calculate Path
+                </button>
+            )}
             <button
                 onClick={clearWalls}
                 className="button"

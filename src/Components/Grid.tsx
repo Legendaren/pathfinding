@@ -6,7 +6,6 @@ import {
     GridElementType,
 } from "../grid-element";
 import {
-    delay,
     generateGraph,
     GridPosition,
     GridSize,
@@ -38,6 +37,13 @@ const Grid = ({ size, start, target }: GridProps) => {
     const [gridStates, setGridStates] = useState<GridElementState[][]>(
         initGridStates(size, startRef.current, targetRef.current)
     );
+    const timeoutRef = useRef<number>();
+
+    const delay = (timeInMs: number): Promise<number> => {
+        return new Promise((resolve) => {
+            timeoutRef.current = setTimeout(resolve, timeInMs);
+        });
+    };
 
     const setElement = useCallback(
         (pos: GridPosition, state: GridElementState) => {
@@ -236,6 +242,13 @@ const Grid = ({ size, start, target }: GridProps) => {
                     setVisitedComplete(false);
                     clearGrid(GridElementType.PATH, GridElementType.VISITED);
                     setGridReset(true);
+                }}
+                cancelCalculation={() => {
+                    clearTimeout(timeoutRef.current);
+                    setVisitedComplete(false);
+                    setCalculatingPath(false);
+                    setGridReset(true);
+                    clearGrid(GridElementType.PATH, GridElementType.VISITED);
                 }}
                 isCalculatingPath={isCalculatingPath}
                 isGridReset={isGridReset}
