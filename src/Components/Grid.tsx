@@ -131,9 +131,10 @@ const Grid = ({ size, start, target }: GridProps) => {
         (state: GridElementState) => {
             const isStart = state.type === GridElementType.START;
             const isTarget = state.type === GridElementType.TARGET;
+            const isDefault = state.type === GridElementType.DEFAULT;
             if (isStart || isTarget) {
                 draggedElementRef.current = state;
-            } else {
+            } else if (isDefault) {
                 const wallElem = GridElementFactory.createWall(state.position);
                 setElement(state.position, wallElem);
             }
@@ -177,11 +178,8 @@ const Grid = ({ size, start, target }: GridProps) => {
 
     const onMouseEnterLeft = useCallback(
         (state: GridElementState) => {
-            const isStart = state.type === GridElementType.START;
-            const isTarget = state.type === GridElementType.TARGET;
-            const isWall = state.type === GridElementType.WALL;
-            const isValidPos = !isWall && !isStart && !isTarget;
-            if (!isValidPos) return;
+            const isDefault = state.type === GridElementType.DEFAULT;
+            if (!isDefault) return;
 
             if (draggedElementRef.current) {
                 handleDrag(state);
