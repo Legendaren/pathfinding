@@ -1,4 +1,4 @@
-import { GridPosition } from "../grid";
+import { GridPosition } from "../Grid/grid";
 import { DistanceVertex } from "./graph";
 
 class PathConstructor {

@@ -1,5 +1,5 @@
 import Graph from "./graph";
-import { GridPosition, ShortestPathFinder } from "../grid";
+import { GridPosition, ShortestPathFinder } from "../Grid/grid";
 import Pathfinder from "./pathfinder";
 
 class Dijkstras extends Pathfinder implements ShortestPathFinder {

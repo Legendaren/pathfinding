@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShortestPathFinder } from "../grid";
+import { ShortestPathFinder } from "../Grid/grid";
 import AStar from "../Pathfinding/astar";
 import BestFirstSearch from "../Pathfinding/best-first-search";
 import DepthFirstSearch from "../Pathfinding/depth-first-search";

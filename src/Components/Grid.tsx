@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useState } from "react";
 import {
-    GridElementFactory,
+    Draggable,
+    ElementType,
     GridElementState,
-    GridElementType,
-} from "../grid-element";
+    RefStates,
+} from "../Grid/GridElement/grid-element";
 import {
     generateGraph,
     GridPosition,
@@ -13,10 +14,13 @@ import {
     posToString,
     ShortestPathFinder,
     stringToPos,
-} from "../grid";
+} from "../Grid/grid";
 import "./../App.css";
 import ControlPanel from "./ControlPanel";
 import GridElement, { Handler } from "./GridElement";
+import Path from "../Grid/GridElement/path";
+import Default from "../Grid/GridElement/default";
+import Visited from "../Grid/GridElement/visited";
 
 interface GridProps {
     size: GridSize;
@@ -29,15 +33,24 @@ const Grid = ({ size, start, target }: GridProps) => {
     const targetRef = useRef<GridPosition>(target);
     const leftMouseDownRef = useRef<boolean>(false);
     const rightMouseDownRef = useRef<boolean>(false);
-    const draggedElementRef = useRef<GridElementState | undefined>(undefined);
+    const draggedElementRef = useRef<Draggable | undefined>(undefined);
     const pathVerticesRef = useRef<GridPosition[]>([]);
+    const timeoutRef = useRef<number>();
     const [isVisitedComplete, setVisitedComplete] = useState<boolean>(false);
     const [isGridReset, setGridReset] = useState<boolean>(true);
     const [isCalculatingPath, setCalculatingPath] = useState<boolean>(false);
     const [gridStates, setGridStates] = useState<GridElementState[][]>(
         initGridStates(size, startRef.current, targetRef.current)
     );
-    const timeoutRef = useRef<number>();
+
+    const allRefs: RefStates = useMemo(
+        () => ({
+            startRef: startRef,
+            targetRef: targetRef,
+            draggedElementRef: draggedElementRef,
+        }),
+        []
+    );
 
     const delay = (timeInMs: number): Promise<number> => {
         return new Promise((resolve) => {
@@ -61,7 +74,7 @@ const Grid = ({ size, start, target }: GridProps) => {
             alert("Path not found");
         }
         for (const pos of pathVerticesRef.current) {
-            const pathGridElement = GridElementFactory.createPath(pos);
+            const pathGridElement = new Path(pos);
             setElement(pos, pathGridElement);
             await delay(30);
         }
@@ -74,13 +87,13 @@ const Grid = ({ size, start, target }: GridProps) => {
         }
     }, [isVisitedComplete, setPathVertices]);
 
-    const clearGrid = useCallback((...types: GridElementType[]) => {
+    const clearGrid = useCallback((...types: ElementType[]) => {
         setGridStates((oldGridStates) =>
             oldGridStates.map((row) =>
-                row.map((state) =>
-                    types.includes(state.type)
-                        ? GridElementFactory.createDefault(state.position)
-                        : state
+                row.map((elem) =>
+                    types.includes(elem.type)
+                        ? new Default(elem.position)
+                        : elem
                 )
             )
         );
@@ -90,8 +103,7 @@ const Grid = ({ size, start, target }: GridProps) => {
         async (vertices: string[]) => {
             for (const v of vertices) {
                 const pos = stringToPos(v);
-                const visitedGridElement =
-                    GridElementFactory.createVisited(pos);
+                const visitedGridElement = new Visited(pos);
                 setElement(pos, visitedGridElement);
                 await delay(15);
             }
@@ -100,56 +112,20 @@ const Grid = ({ size, start, target }: GridProps) => {
         [setElement]
     );
 
-    const clearElement = useCallback(
-        (pos: GridPosition) => {
-            setElement(pos, GridElementFactory.createDefault(pos));
-        },
-        [setElement]
-    );
-
-    const handleDrag = useCallback(
-        (state: GridElementState) => {
-            const newDraggedElement: GridElementState = {
-                ...draggedElementRef.current!,
-                position: state.position,
-            };
-
-            if (newDraggedElement.type === GridElementType.START) {
-                startRef.current = state.position;
-            } else if (newDraggedElement.type === GridElementType.TARGET) {
-                targetRef.current = state.position;
-            }
-
-            clearElement(draggedElementRef.current!.position);
-            setElement(state.position, newDraggedElement);
-            draggedElementRef.current = newDraggedElement;
-        },
-        [setElement, clearElement]
-    );
-
     const onMouseDownLeft = useCallback(
         (state: GridElementState) => {
-            const isStart = state.type === GridElementType.START;
-            const isTarget = state.type === GridElementType.TARGET;
-            const isDefault = state.type === GridElementType.DEFAULT;
-            if (isStart || isTarget) {
-                draggedElementRef.current = state;
-            } else if (isDefault) {
-                const wallElem = GridElementFactory.createWall(state.position);
-                setElement(state.position, wallElem);
-            }
+            state.onMouseDownLeft(setElement, allRefs);
             leftMouseDownRef.current = true;
         },
-        [setElement]
+        [setElement, allRefs]
     );
 
     const onMouseDownRight = useCallback(
         (state: GridElementState) => {
-            const isWall = state.type === GridElementType.WALL;
-            if (isWall) clearElement(state.position);
+            state.onMouseDownRight(setElement, allRefs);
             rightMouseDownRef.current = true;
         },
-        [clearElement]
+        [setElement, allRefs]
     );
 
     const onMouseDownHandler: Handler = useCallback(
@@ -178,27 +154,20 @@ const Grid = ({ size, start, target }: GridProps) => {
 
     const onMouseEnterLeft = useCallback(
         (state: GridElementState) => {
-            const isDefault = state.type === GridElementType.DEFAULT;
-            if (!isDefault) return;
-
-            if (draggedElementRef.current) {
-                handleDrag(state);
-            } else if (leftMouseDownRef.current) {
-                const wallElem = GridElementFactory.createWall(state.position);
-                setElement(state.position, wallElem);
+            if (leftMouseDownRef.current) {
+                state.onMouseEnterLeft(setElement, allRefs);
             }
         },
-        [setElement, handleDrag]
+        [setElement, allRefs]
     );
 
     const onMouseEnterRight = useCallback(
         (state: GridElementState) => {
-            const isWall = state.type === GridElementType.WALL;
-            if (rightMouseDownRef.current && isWall) {
-                clearElement(state.position);
+            if (rightMouseDownRef.current) {
+                state.onMouseEnterRight(setElement, allRefs);
             }
         },
-        [clearElement]
+        [setElement, allRefs]
     );
 
     const onMouseEnterHandler: Handler = useCallback(
@@ -235,10 +204,12 @@ const Grid = ({ size, start, target }: GridProps) => {
         <>
             <ControlPanel
                 calculatePath={calculatePath}
-                clearWalls={() => clearGrid(GridElementType.WALL)}
+                clearWalls={() => {
+                    clearGrid("obstacle");
+                }}
                 clearPath={() => {
                     setVisitedComplete(false);
-                    clearGrid(GridElementType.PATH, GridElementType.VISITED);
+                    clearGrid("path");
                     setGridReset(true);
                 }}
                 cancelCalculation={() => {
@@ -246,7 +217,7 @@ const Grid = ({ size, start, target }: GridProps) => {
                     setVisitedComplete(false);
                     setCalculatingPath(false);
                     setGridReset(true);
-                    clearGrid(GridElementType.PATH, GridElementType.VISITED);
+                    clearGrid("path");
                 }}
                 isCalculatingPath={isCalculatingPath}
                 isGridReset={isGridReset}

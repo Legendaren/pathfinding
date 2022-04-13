@@ -1,5 +1,5 @@
-import Graph, { DistanceVertex } from "./graph";
-import { GridPosition, ShortestPathFinder, stringToPos } from "../grid";
+import Graph from "./graph";
+import { GridPosition, ShortestPathFinder, stringToPos } from "../Grid/grid";
 import Pathfinder from "./pathfinder";
 
 class DepthFirstSearch extends Pathfinder implements ShortestPathFinder {
@@ -13,9 +13,7 @@ class DepthFirstSearch extends Pathfinder implements ShortestPathFinder {
 
         // [visited, path]
         const stack: [Set<string>, string[]][] = [[new Set([start]), [start]]];
-        let iterations = 0;
         while (stack.length > 0) {
-            iterations++;
             const [visited, path] = stack.pop()!;
             const lastPathVertex = path[path.length - 1];
 

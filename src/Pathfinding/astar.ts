@@ -1,5 +1,5 @@
 import Graph from "./graph";
-import { GridPosition, ShortestPathFinder } from "../grid";
+import { GridPosition, ShortestPathFinder } from "../Grid/grid";
 import Heuristics from "./heuristics";
 import Pathfinder from "./pathfinder";
 

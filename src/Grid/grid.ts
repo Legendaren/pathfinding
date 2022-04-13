@@ -1,9 +1,8 @@
-import {
-    GridElementFactory,
-    GridElementState,
-    GridElementType,
-} from "./grid-element";
-import Graph, { Edge, Vertex } from "./Pathfinding/graph";
+import { GridElementState } from "./GridElement/grid-element";
+import Graph, { Edge, Vertex } from "../Pathfinding/graph";
+import Default from "./GridElement/default";
+import Start from "./GridElement/start";
+import Target from "./GridElement/target";
 
 export interface GridPosition {
     x: number;
@@ -59,15 +58,15 @@ export const initGridStates = (
         const row: GridElementState[] = [];
         for (let j = 0; j < size.columns; j++) {
             const position = { x: j, y: i };
-            row.push(GridElementFactory.createDefault(position));
+            row.push(new Default(position));
         }
         gridStates.push(row);
     }
 
     // Set start vertex
-    gridStates[start.y][start.x] = GridElementFactory.createStart(start);
+    gridStates[start.y][start.x] = new Start(start);
     // Set target vertex
-    gridStates[target.y][target.x] = GridElementFactory.createTarget(target);
+    gridStates[target.y][target.x] = new Target(target);
 
     return gridStates;
 };
@@ -77,12 +76,10 @@ export const generateGraph = (
     gridSize: GridSize
 ): Graph => {
     const graph = new Graph();
-
     for (let i = 0; i < gridSize.rows; i++) {
         for (let j = 0; j < gridSize.columns; j++) {
-            if (states[i][j].type === GridElementType.WALL) continue;
-
             const pos: GridPosition = { x: j, y: i };
+            if (states[pos.y][pos.x].type === "obstacle") continue;
 
             const vertex = new Vertex(posToString(pos), pos);
             graph.addVertex(vertex);
@@ -90,7 +87,7 @@ export const generateGraph = (
             const adjValidVertices = adjacentVertexPositions(pos).filter(
                 (p) =>
                     inBounds(p, gridSize) &&
-                    states[p.y][p.x].type !== GridElementType.WALL
+                    states[p.y][p.x].type !== "obstacle"
             );
 
             for (const vertexPos of adjValidVertices) {
