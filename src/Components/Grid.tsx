@@ -112,17 +112,20 @@ const Grid = ({ size, start, target }: GridProps) => {
         [setElement]
     );
 
-    const onMouseDownHandler: Handler = useCallback((e, state) => {
-        const isLeft = e.button === 0;
-        const isRight = e.button === 2;
-        if (isLeft) {
-            state.onMouseDownLeft(setElement, allRefs);
-            leftMouseDownRef.current = true;
-        } else if (isRight) {
-            state.onMouseDownRight(setElement, allRefs);
-            rightMouseDownRef.current = true;
-        }
-    }, []);
+    const onMouseDownHandler: Handler = useCallback(
+        (e, state) => {
+            const isLeft = e.button === 0;
+            const isRight = e.button === 2;
+            if (isLeft) {
+                state.onMouseDownLeft(setElement, allRefs);
+                leftMouseDownRef.current = true;
+            } else if (isRight) {
+                state.onMouseDownRight(setElement, allRefs);
+                rightMouseDownRef.current = true;
+            }
+        },
+        [setElement, allRefs]
+    );
 
     const onMouseUpHandler: Handler = useCallback((e, state) => {
         const isLeft = e.button === 0;
@@ -135,14 +138,17 @@ const Grid = ({ size, start, target }: GridProps) => {
         }
     }, []);
 
-    const onMouseEnterHandler: Handler = useCallback((e, state) => {
-        if (leftMouseDownRef.current) {
-            state.onMouseEnterLeft(setElement, allRefs);
-        }
-        if (rightMouseDownRef.current) {
-            state.onMouseEnterRight(setElement, allRefs);
-        }
-    }, []);
+    const onMouseEnterHandler: Handler = useCallback(
+        (e, state) => {
+            if (leftMouseDownRef.current) {
+                state.onMouseEnterLeft(setElement, allRefs);
+            }
+            if (rightMouseDownRef.current) {
+                state.onMouseEnterRight(setElement, allRefs);
+            }
+        },
+        [setElement, allRefs]
+    );
 
     const calculatePath = useCallback(
         (pathfinder: ShortestPathFinder) => {
